@@ -1,5 +1,7 @@
 package com.iremayvaz.model.entity;
 
+import com.iremayvaz.model.entity.enums.Gender;
+import com.iremayvaz.model.entity.enums.RoleName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,8 +40,10 @@ public class Employee {
     private String email;
 
     @Column(name = "position")
-    private String position;
+    @Enumerated(EnumType.STRING)
+    private RoleName position;
 
     @Column(name = "gender")
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
 }

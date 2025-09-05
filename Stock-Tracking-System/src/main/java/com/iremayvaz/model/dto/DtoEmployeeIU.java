@@ -1,5 +1,7 @@
 package com.iremayvaz.model.dto;
 
+import com.iremayvaz.model.entity.enums.Gender;
+import com.iremayvaz.model.entity.enums.RoleName;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -37,8 +39,8 @@ public class DtoEmployeeIU {
     private String email;
 
     @NotBlank(message = "Unvan girilmeli!")
-    private String position;
+    private RoleName position;
 
     @NotBlank(message = "Cinsiyet boş bırakılamaz!")
-    private String gender;
+    private Gender gender;
 }

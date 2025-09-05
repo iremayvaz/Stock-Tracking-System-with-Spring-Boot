@@ -2,19 +2,23 @@ package com.iremayvaz.config;
 
 import com.iremayvaz.model.jwt.AuthEntryPoint;
 import com.iremayvaz.model.jwt.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     // GÜVENLİK KURALLARI
 
@@ -22,14 +26,23 @@ public class SecurityConfig {
     public static final String REGISTER = "/register";
     public static final String REFRESH_TOKEN = "/refreshToken";
 
-    @Autowired
-    private AuthenticationProvider authenticationProvider; // Kullanıcı doğrulaması
+    private final JwtAuthenticationFilter jwtAuthenticationFilter; // Gelen isteğin header'ını kontrol eder
+    private final UserDetailsService userDetailsService; // AppUserDetailsService gelecek context'ten
+    private final AuthEntryPoint authEntryPoint; // unauthenticated işlemler için 401 hataları üretir
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter; // Gelen isteğin header'ını kontrol eder
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder(){ // Girdiğimiz şifreyi hash'ler
+        return new BCryptPasswordEncoder();
+    }
 
-    @Autowired
-    private AuthEntryPoint authEntryPoint;
+    @Bean
+    public AuthenticationProvider authenticationProvider(){
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+
+        return daoAuthenticationProvider;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { // Güvenlik kuralları
@@ -42,16 +55,13 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e.authenticationEntryPoint(authEntryPoint))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Her istekte JWT bekler
-                .authenticationProvider(authenticationProvider) // Kullanıcı doğrulama sağlayıcısını (DaoAuthenticationProvider) Security’ye tanıtıyorsun.
+                .authenticationProvider(authenticationProvider()) // Kullanıcı doğrulama sağlayıcısını (DaoAuthenticationProvider) Security’ye tanıtıyorsun.
                 .addFilterBefore(jwtAuthenticationFilter, // JWT kontrolü
                         UsernamePasswordAuthenticationFilter.class); // Gelen request’in header’ında JWT varsa doğrulanır.
 
         return http.build();
     }
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder(){ // Girdiğimiz şifreyi hash'ler
-        return new BCryptPasswordEncoder();
-    }
+
 
 }

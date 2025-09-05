@@ -1,5 +1,6 @@
 package com.iremayvaz.model.dto;
 
+import com.iremayvaz.model.entity.enums.RoleName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,6 @@ public class DtoEmployee {
 
     private String firstName;
     private String lastName;
-    private String position;
+    private RoleName position;
 
 }
