@@ -12,4 +12,6 @@ public interface RestEmployeeController {
     public DtoEmployee updateEmployeeInfos(DtoEmployeeIU updatedEmployee);
 
     public DtoEmployee getEmployeeInfo(String email);
+
+    public void deleteEmployee(String email); // USER'LA İLİŞKİLİ EMPLOYEE TABLOSU DİREKT SİLİNİR Mİ KONTROL ET!!!
 }

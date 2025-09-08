@@ -11,4 +11,6 @@ public interface EmployeeService {
     public DtoEmployee updateEmployeeInfos(DtoEmployeeIU updatedEmployee);
 
     public DtoEmployee getEmployeeInfo(String email);
+
+    public void deleteEmployee(String email);
 }

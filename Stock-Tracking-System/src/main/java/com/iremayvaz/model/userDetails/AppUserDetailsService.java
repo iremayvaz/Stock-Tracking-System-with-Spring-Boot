@@ -17,6 +17,10 @@ public class AppUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Geçersiz email : " + email));
+
+        System.out.println("role = " + user.getRole().getName());
+        System.out.println("perms = " + user.getRole().getPermissions()); // burada dolu mu?
+
         return AppUserDetails.from(user);
     }
 }

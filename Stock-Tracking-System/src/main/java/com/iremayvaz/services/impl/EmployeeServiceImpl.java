@@ -7,6 +7,7 @@ import com.iremayvaz.model.entity.Product;
 import com.iremayvaz.repository.EmployeeRepository;
 import com.iremayvaz.repository.specifications.EmployeeSpecifications;
 import com.iremayvaz.services.EmployeeService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return dtoEmployees;
     }
 
+    @Transactional
     @Override
     public DtoEmployee updateEmployeeInfos(DtoEmployeeIU updateEmployeeRequest) {
         DtoEmployee dto = new DtoEmployee();
@@ -68,6 +70,16 @@ public class EmployeeServiceImpl implements EmployeeService {
             return dto;
         } else {
             throw new IllegalArgumentException("Email ile kayıtlı kullanıcı yok!");
+        }
+    }
+
+    @Override
+    public void deleteEmployee(String email) {
+        Optional<Employee> optional = employeeRepository.findByEmail(email);
+        if(optional.isPresent()){
+            employeeRepository.delete(optional.get());
+        } else {
+            throw new IllegalArgumentException("Yanlış email girdiniz veya böyle bir çalışan kaydı yok!");
         }
     }
 }

@@ -6,6 +6,7 @@ import com.iremayvaz.model.entity.Product;
 import com.iremayvaz.repository.ProductRepository;
 import com.iremayvaz.repository.specifications.ProductSpecifications;
 import com.iremayvaz.services.ProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
 
+    @Transactional
     @Override
     public DtoProduct addProduct(DtoProductIU addProductRequest) {
         DtoProduct dto = new DtoProduct();
@@ -40,6 +42,7 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
+    @Transactional
     @Override
     public DtoProduct updateProductInfos(DtoProductIU updateProductRequest) {
         DtoProduct dto = new DtoProduct();

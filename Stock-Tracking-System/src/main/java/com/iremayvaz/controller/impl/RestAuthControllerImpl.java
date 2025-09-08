@@ -7,9 +7,11 @@ import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.RefreshTokenRequest;
 import com.iremayvaz.services.impl.AuthServiceImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -20,13 +22,13 @@ public class RestAuthControllerImpl implements RestAuthController {
 
     @Override
     @PostMapping("/register")
-    public DtoUser register(DtoUserIU dtoUserIU) {
+    public DtoUser register(@RequestBody @Valid DtoUserIU dtoUserIU) {
         return authService.register(dtoUserIU);
     }
 
     @Override
     @PutMapping("/login")
-    public AuthResponse login(AuthRequest existingEmployee) {
+    public AuthResponse login(@RequestBody @Valid AuthRequest existingEmployee) {
         return authService.login(existingEmployee);
     }
 

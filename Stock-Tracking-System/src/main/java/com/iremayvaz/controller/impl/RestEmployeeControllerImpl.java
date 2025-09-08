@@ -4,12 +4,10 @@ import com.iremayvaz.controller.RestEmployeeController;
 import com.iremayvaz.model.dto.DtoEmployee;
 import com.iremayvaz.model.dto.DtoEmployeeIU;
 import com.iremayvaz.services.impl.EmployeeServiceImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,28 +16,14 @@ import java.util.List;
 @RequestMapping("/employee")
 public class RestEmployeeControllerImpl implements RestEmployeeController {
 
-    /*
-    * EMPLOYEE,
-    ACCOUNTANT,
-    SECRETARY,
-    BOSS,
-    CONSULTANT,
-    VISITOR,
-    AUTHORIZED
-    *
-    * EMPLOYEE_LIST,
-    EMPLOYEE_UPDATE,
-    EMPLOYEE_DELETE,
-    EMPLOYEE_ADD,*/
-
-
     private final EmployeeServiceImpl employeeService;
 
     @Override
     @PreAuthorize("hasAuthority('EMPLOYEE_LIST') and (hasRole('ACCOUNTANT') or hasRole('SECRETARY') or hasRole('BOSS') or" +
                                                      "hasRole('CONSULTANT') or hasRole('AUTHORIZED'))")
     @PutMapping("/filter")
-    public List<DtoEmployee> filterEmployee(String column, String content) {
+    public List<DtoEmployee> filterEmployee(@PathVariable String column,
+                                            @PathVariable String content) {
         return employeeService.filterEmployee(column, content);
     }
 
@@ -47,14 +31,21 @@ public class RestEmployeeControllerImpl implements RestEmployeeController {
     @PreAuthorize("hasAuthority('EMPLOYEE_LIST') and (hasRole('ACCOUNTANT') or hasRole('SECRETARY') or hasRole('BOSS') or" +
                                                     "hasRole('CONSULTANT') or hasRole('AUTHORIZED'))")
     @PutMapping("/information")
-    public DtoEmployee getEmployeeInfo(String email) { // Giriş yapan kullanıcı bir yerde tutulmalı ki oradan emaili al koy
+    public DtoEmployee getEmployeeInfo(@PathVariable String email) { // Giriş yapan kullanıcı bir yerde tutulmalı ki oradan emaili al koy
         return employeeService.getEmployeeInfo(email);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('EMPLOYEE_DELETE') and (hasRole('SECRETARY') or hasRole('BOSS') or hasRole('AUTHORIZED'))")
+    @DeleteMapping("/delete")
+    public void deleteEmployee(String email) {
+        employeeService.deleteEmployee(email);
     }
 
     @Override
     @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE') and (hasRole('SECRETARY') or hasRole('BOSS') or hasRole('AUTHORIZED'))")
     @PostMapping("/update")
-    public DtoEmployee updateEmployeeInfos(DtoEmployeeIU updatedEmployee) {
+    public DtoEmployee updateEmployeeInfos(@RequestBody @Valid DtoEmployeeIU updatedEmployee) {
         return employeeService.updateEmployeeInfos(updatedEmployee);
     }
 }

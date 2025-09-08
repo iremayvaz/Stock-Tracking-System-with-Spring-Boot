@@ -12,6 +12,7 @@ import com.iremayvaz.repository.EmployeeRepository;
 import com.iremayvaz.repository.RefreshTokenRepository;
 import com.iremayvaz.repository.UserRepository;
 import com.iremayvaz.services.AuthService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private JwtService jwtService;
 
+    @Transactional // Bir metot veya sınıfın tamamını bir işlem sayar. Hata durumunda rollback yapar. (son committen sonraki tüm değişiklikler)
     @Override
     public DtoUser register(DtoUserIU dtoUserIU){
         DtoUser dto = new DtoUser();

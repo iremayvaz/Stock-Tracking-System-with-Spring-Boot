@@ -5,6 +5,7 @@ import com.iremayvaz.model.dto.DtoProduct;
 import com.iremayvaz.model.dto.DtoProductIU;
 import com.iremayvaz.model.entity.Product;
 import com.iremayvaz.services.impl.ProductServiceImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,7 +24,7 @@ public class RestProductControllerImpl implements RestProductController {
     @PreAuthorize("hasAuthority('PRODUCT_ADD') and (hasRole('SECRETARY') or hasRole('EMPLOYEE') or hasRole('BOSS') or" +
                                                     "hasRole('CONSULTANT') or hasRole('AUTHORIZED') or hasRole('ACCOUNTANT'))")
     @PostMapping("/add")
-    public DtoProduct addProduct(DtoProductIU addProductRequest) {
+    public DtoProduct addProduct(@RequestBody @Valid DtoProductIU addProductRequest) {
         return productService.addProduct(addProductRequest);
     }
 
@@ -31,7 +32,7 @@ public class RestProductControllerImpl implements RestProductController {
     @PreAuthorize("hasAuthority('PRODUCT_UPDATE') and (hasRole('SECRETARY') or hasRole('EMPLOYEE') or hasRole('BOSS') or" +
                                                         "hasRole('CONSULTANT') or hasRole('AUTHORIZED'))")
     @PostMapping("/update")
-    public DtoProduct updateProductInfos(DtoProductIU updateProductRequest) {
+    public DtoProduct updateProductInfos(@RequestBody @Valid DtoProductIU updateProductRequest) {
         return productService.updateProductInfos(updateProductRequest);
     }
 
@@ -39,7 +40,7 @@ public class RestProductControllerImpl implements RestProductController {
     @PreAuthorize("hasAuthority('PRODUCT_DELETE') and hasRole('SECRETARY') or hasRole('BOSS') or" +
                                                       "hasRole('AUTHORIZED')  or hasRole('ACCOUNTANT'))")
     @DeleteMapping("/delete")
-    public void deleteProduct(String barcode) {
+    public void deleteProduct(@PathVariable String barcode) {
         productService.deleteProduct(barcode);
     }
 
@@ -47,7 +48,8 @@ public class RestProductControllerImpl implements RestProductController {
     @PreAuthorize("hasAuthority('PRODUCT_LIST') and (hasRole('EMPLOYEE') or hasRole('ACCOUNTANT') or hasRole('SECRETARY') or" +
                                                      "hasRole('BOSS') or hasRole('CONSULTANT') or hasRole('VISITOR') or hasRole('AUTHORIZED'))")
     @PutMapping("/filter")
-    public List<DtoProduct> filterProduct(String column, String content) {
+    public List<DtoProduct> filterProduct(@PathVariable String column,
+                                          @PathVariable String content) {
         return productService.filterProduct(column, content);
     }
 }
