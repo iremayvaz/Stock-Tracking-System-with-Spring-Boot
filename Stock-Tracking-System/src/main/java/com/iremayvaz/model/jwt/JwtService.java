@@ -1,36 +1,66 @@
 package com.iremayvaz.model.jwt;
 
+import com.iremayvaz.model.entity.User;
+import com.iremayvaz.model.userDetails.AppUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 @Component
+@RequiredArgsConstructor
 public class JwtService {
 
     public static final String SECRET_KEY = "R8HFcGTlOF8shhqFqp+o8FADLCohD6C5v2bHbfbQhnQ=";
+    private static final Duration ACCESS_TTL = Duration.ofHours(2);
 
     public String generateToken(UserDetails userDetails){
-        Map<String, Object> claimsMap = new HashMap<>();
-        claimsMap.put("role", "ADMIN");
+        Map<String, Object> claimsMap = buildClaims(userDetails);
+        Date now = new Date();
+        Date expiredDate = new Date(now.getTime() + ACCESS_TTL.toMillis());
 
         return Jwts.builder() // Token oluşturucu başlat
                 .setSubject(userDetails.getUsername()) // Kullanıcı adını token payload'una koy
                 .addClaims(claimsMap)
-                .setIssuedAt(new Date()) // Token ne zaman oluşturuldu?
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*60*2)) // Token ne kadar geçerli? // 1000ms = 1s
+                .setIssuedAt(now) // Token ne zaman oluşturuldu?
+                .setExpiration(expiredDate) // Token ne kadar geçerli?
                 .signWith(getKey(), // Token'ı oluştururken ve çözerken kullanılacak key
                         SignatureAlgorithm.HS256) // HMAC-SHA256 algosu ile imzala
                 .compact(); // Token'ı string olarak dön
+    }
+
+    public Map<String, Object> buildClaims(UserDetails userDetails){ // Doğrulanmış kullanıcının token'ı içine koyulacak claim'leri hazırlar.
+        Map<String, Object> claims = new HashMap<>();
+
+        if(userDetails instanceof AppUserDetails appUserDetails){
+            claims.put("user_id", appUserDetails.getId());
+            claims.put("email", appUserDetails.getEmail());
+            claims.put("role", appUserDetails.getRoleName().name());
+            claims.put("permissions", appUserDetails.getPermissions()
+                                                    .stream()
+                                                    .map(Enum::name)
+                                                    .toList());
+        } else {
+            var all = userDetails.getAuthorities()
+                                 .stream()
+                                 .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                                 .toList();
+
+            claims.put("role", all.stream().filter(a -> a.startsWith("ROLE_")).toList());
+            claims.put("permissions", all.stream().filter(a -> !a.startsWith("ROLE_")).toList());
+        }
+        return claims;
     }
 
     public Object getClaimsByKey(String token, String key){
@@ -62,7 +92,7 @@ public class JwtService {
         Date expiredDate = exportToken(token, Claims::getExpiration);
         // Now: 15.40
         // expiredDate : 15.45
-        return new Date().before(expiredDate);
+        return new Date().after(expiredDate); // şu anki zaman expiredDate'i geçtiyse TRUE yani token süresi dolmuş!
     }
 
     public Key getKey(){ // Token'ı oluşturacak ve çözecek "key"

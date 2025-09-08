@@ -8,39 +8,32 @@ import com.iremayvaz.model.entity.User;
 import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.JwtService;
-import com.iremayvaz.repository.EmployeeRepository;
 import com.iremayvaz.repository.RefreshTokenRepository;
 import com.iremayvaz.repository.UserRepository;
 import com.iremayvaz.services.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.Date;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
-
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    private AuthenticationProvider authenticationProvider;
-
-    @Autowired
-    private JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final AuthenticationProvider authenticationProvider;
+    private final JwtService jwtService;
 
     @Transactional // Bir metot veya sınıfın tamamını bir işlem sayar. Hata durumunda rollback yapar. (son committen sonraki tüm değişiklikler)
     @Override
@@ -74,8 +67,32 @@ public class AuthServiceImpl implements AuthService {
         return employee;
     }
 
+    private RefreshToken createRefreshToken(User user){
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setRefreshToken(UUID.randomUUID().toString());
+        refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000*60*60*4)); // 4 saat
+        refreshToken.setUser(user);
+
+        return refreshToken;
+    }
+
+    @Transactional
     @Override
-    public AuthResponse login(AuthRequest existingUser) {
-        return null;
+    public AuthResponse login(AuthRequest request) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()); // Email, şifre
+
+        Authentication authentication = authenticationProvider.authenticate(authenticationToken); // UserDetailsService'ten DB'ye yükler ve şifreyi doğrular.
+
+        var principal = (UserDetails) authentication.getPrincipal(); // doğrulanmış kullanıcı
+        String accessToken = jwtService.generateToken(principal);
+
+        var user = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Kullanıcı bulunamadı!"));
+
+        RefreshToken refreshToken = createRefreshToken(user);
+        refreshTokenRepository.save(refreshToken);
+
+        return new AuthResponse(accessToken, refreshToken.getRefreshToken());
     }
 }

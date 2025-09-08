@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -30,7 +31,7 @@ public class SecurityConfig {
     private final AuthEntryPoint authEntryPoint; // unauthenticated işlemler için 401 hataları üretir
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder(){ // Girdiğimiz şifreyi hash'ler
+    public PasswordEncoder passwordEncoder(){ // Girdiğimiz şifreyi hash'ler
         return new BCryptPasswordEncoder();
     }
 
@@ -60,7 +61,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-
-
 }

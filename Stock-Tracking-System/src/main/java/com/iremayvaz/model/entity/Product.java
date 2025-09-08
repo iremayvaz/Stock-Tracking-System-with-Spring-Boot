@@ -18,7 +18,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "barcode")
+    @Column(name = "barcode", unique = true, nullable = false)
     private String barcode;
 
     @Column(name = "category")

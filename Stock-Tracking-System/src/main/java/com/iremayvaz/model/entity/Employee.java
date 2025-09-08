@@ -24,7 +24,7 @@ public class Employee {
     @JoinColumn(name = "id")
     private User user;
 
-    @Column(name = "tck_no")
+    @Column(name = "tck_no", unique = true, nullable = false)
     private String tck_no;
 
     @Column(name = "first_name")
@@ -33,10 +33,10 @@ public class Employee {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true)
     private String phoneNum;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @Column(name = "position")
