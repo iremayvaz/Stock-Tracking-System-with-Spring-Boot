@@ -6,7 +6,7 @@ import com.iremayvaz.model.entity.Product;
 import com.iremayvaz.repository.ProductRepository;
 import com.iremayvaz.repository.specifications.ProductSpecifications;
 import com.iremayvaz.services.ProductService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class ProductServiceImpl implements ProductService {
         product.setColor(addProductRequest.getColor());
         product.setExplanation(addProductRequest.getExplanation());
         product.setPrice(addProductRequest.getPrice());
-        product.setNumber(addProductRequest.getNumber());
+        product.setStockQuantity(addProductRequest.getStockQuantity());
         product.setSize(addProductRequest.getSize());
 
         Product savedProduct = productRepository.save(product);
@@ -55,7 +55,7 @@ public class ProductServiceImpl implements ProductService {
         if(product.getColor().equals(updateProductRequest.getColor())){ product.setColor(updateProductRequest.getColor());}
         if(product.getExplanation().equals(updateProductRequest.getExplanation())){ product.setExplanation(updateProductRequest.getExplanation());}
         if(product.getPrice().equals(updateProductRequest.getPrice())){ product.setPrice(updateProductRequest.getPrice());}
-        if(product.getNumber().equals(updateProductRequest.getNumber())){ product.setNumber(updateProductRequest.getNumber());}
+        if(product.getStockQuantity().equals(updateProductRequest.getStockQuantity())){ product.setStockQuantity(updateProductRequest.getStockQuantity());}
         if(product.getSize().equals(updateProductRequest.getSize())){ product.setSize(updateProductRequest.getSize());}
 
         Product savedProduct = productRepository.save(product);
@@ -64,6 +64,7 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
+    @Transactional
     @Override
     public void deleteProduct(String barcode) {
         Optional<Product> optional = productRepository.findByBarcode(barcode);
@@ -74,6 +75,7 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
+    @Transactional(readOnly=true)
     @Override
     public List<DtoProduct> filterProduct(String column, String content) {
         DtoProduct dto = new DtoProduct();

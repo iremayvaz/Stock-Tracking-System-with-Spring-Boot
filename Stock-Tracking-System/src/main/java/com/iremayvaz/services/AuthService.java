@@ -4,6 +4,7 @@ import com.iremayvaz.model.dto.DtoUser;
 import com.iremayvaz.model.dto.DtoUserIU;
 import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
+import org.springframework.http.ResponseEntity;
 
 public interface AuthService {
 

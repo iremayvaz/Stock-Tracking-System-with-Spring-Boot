@@ -7,34 +7,41 @@ import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.RefreshTokenRequest;
 import com.iremayvaz.services.impl.AuthServiceImpl;
+import com.iremayvaz.services.impl.RefreshTokenServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
 public class RestAuthControllerImpl implements RestAuthController {
 
     private final AuthServiceImpl authService;
+    private final RefreshTokenServiceImpl refreshTokenService;
 
     @Override
     @PostMapping("/register")
-    public DtoUser register(@RequestBody @Valid DtoUserIU dtoUserIU) {
-        return authService.register(dtoUserIU);
+    public ResponseEntity<DtoUser> register(@RequestBody @Valid DtoUserIU dtoUserIU) {
+        var newUser = authService.register(dtoUserIU);
+        return ResponseEntity.created(URI.create("/users/" + newUser.getEmail())).body(newUser);
     }
 
     @Override
-    @PutMapping("/login")
-    public AuthResponse login(@RequestBody @Valid AuthRequest existingEmployee) {
-        return authService.login(existingEmployee);
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest existingEmployee) {
+        var newLogin = authService.login(existingEmployee);
+        return ResponseEntity.accepted().body(newLogin);
     }
 
     @Override
-    @PostMapping("/refreshToken")
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
-        return null;
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
+        var refresh = refreshTokenService.refreshToken(request);
+        return ResponseEntity.accepted().body(refresh);
     }
 }

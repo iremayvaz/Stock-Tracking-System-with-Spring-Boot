@@ -1,8 +1,6 @@
 package com.iremayvaz.model.dto;
 
 import com.iremayvaz.model.entity.enums.Gender;
-import com.iremayvaz.model.entity.enums.RoleName;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -34,12 +32,17 @@ public class DtoEmployeeIU {
     @Pattern(regexp = "^5\\d{9}$", message = "Telefon numarasını başında 0 olmadan giriniz!")
     private String phoneNum;
 
-    @NotBlank(message = "Email girilmeli!")
+    /*
+    * DUPLICATE DATA
+    *
+    * @NotBlank(message = "Email girilmeli!")
     @Email(message="Geçerli bir e-posta girin")
     private String email;
 
     @NotBlank(message = "Unvan girilmeli!")
     private RoleName position;
+    * */
+
 
     @NotBlank(message = "Cinsiyet boş bırakılamaz!")
     private Gender gender;

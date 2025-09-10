@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component // Otomatik bean olarak kaydeder
-public class AuthEntryPoint implements AuthenticationEntryPoint {
+public class AuthEntryPoint implements AuthenticationEntryPoint { // Unauthenticated request'lerde çalışır
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {

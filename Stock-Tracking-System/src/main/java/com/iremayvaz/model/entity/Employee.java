@@ -19,7 +19,7 @@ public class Employee {
     @Id
     private Long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "id")
     private User user;
@@ -36,12 +36,17 @@ public class Employee {
     @Column(name = "phone_number", unique = true)
     private String phoneNum;
 
-    @Column(name = "email", unique = true, nullable = false)
+    /*
+    * DUPLICATED VALUES BETWEEN USER - EMPLOYEE
+    *
+    *  @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @Column(name = "position")
     @Enumerated(EnumType.STRING)
     private RoleName position;
+
+    * */
 
     @Column(name = "gender")
     @Enumerated(EnumType.STRING)

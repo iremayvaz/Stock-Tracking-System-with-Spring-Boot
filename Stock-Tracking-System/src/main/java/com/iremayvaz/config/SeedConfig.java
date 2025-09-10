@@ -4,6 +4,7 @@ import com.iremayvaz.model.entity.Role;
 import com.iremayvaz.model.entity.enums.Permission;
 import com.iremayvaz.model.entity.enums.RoleName;
 import com.iremayvaz.repository.RoleRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +20,9 @@ public class SeedConfig {
 
     private final RoleRepository roleRepository;
 
+    @Transactional
     @Bean
-    public CommandLineRunner seed(){ // Uyg başladıktan sonra 1 kez çalışır.
+    public CommandLineRunner seed(){ // CommandLineRunner : Uyg başladıktan sonra 1 kez çalışır.
         return args -> {
             // DB'de kayıt yoksa kaydet!
             if (roleRepository.count() == 0) {
@@ -35,7 +37,8 @@ public class SeedConfig {
                         Permission.EMPLOYEE_ADD,
                         Permission.PRODUCT_ADD,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST
+                        Permission.PRODUCT_LIST,
+                        Permission.ME
                 ));
 
                 Role accountant = new Role(); // MUHASEBECİ
@@ -44,7 +47,8 @@ public class SeedConfig {
                         Permission.PRODUCT_DELETE,
                         Permission.PRODUCT_UPDATE,
                         Permission.PRODUCT_ADD,
-                        Permission.PRODUCT_LIST
+                        Permission.PRODUCT_LIST,
+                        Permission.ME
                 ));
 
                 Role authorized = new Role(); // YETKİLİ KİŞİ
@@ -57,7 +61,8 @@ public class SeedConfig {
                         Permission.EMPLOYEE_ADD,
                         Permission.PRODUCT_ADD,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST
+                        Permission.PRODUCT_LIST,
+                        Permission.ME
                 ));
 
                 Role consultant = new Role(); // DANIŞMAN
@@ -66,7 +71,8 @@ public class SeedConfig {
                         Permission.EMPLOYEE_UPDATE,
                         Permission.EMPLOYEE_ADD,
                         Permission.EMPLOYEE_DELETE,
-                        Permission.EMPLOYEE_LIST
+                        Permission.EMPLOYEE_LIST,
+                        Permission.ME
                 ));
 
                 Role employee = new Role(); // ÇALIŞAN
@@ -74,7 +80,8 @@ public class SeedConfig {
                 employee.setPermissions(Set.of(
                         Permission.PRODUCT_UPDATE,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST
+                        Permission.PRODUCT_LIST,
+                        Permission.ME
 
                         // kendi bilgilerini de güncellesin??
                 ));
@@ -89,14 +96,16 @@ public class SeedConfig {
                         Permission.EMPLOYEE_ADD,
                         Permission.PRODUCT_ADD,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST
+                        Permission.PRODUCT_LIST,
+                        Permission.ME
                 ));
 
                 Role visitor = new Role(); // ZİYARETÇİ
                 visitor.setName(RoleName.VISITOR);
                 visitor.setPermissions(Set.of(
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST
+                        Permission.PRODUCT_LIST,
+                        Permission.ME
                 ));
 
                 // Tüm rolleri - izinleri veri tabanına kaydet

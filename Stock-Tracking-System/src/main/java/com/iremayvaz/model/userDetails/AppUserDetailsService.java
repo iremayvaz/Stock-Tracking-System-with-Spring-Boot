@@ -8,9 +8,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service // UserDetailsService bean'i olarak kaydedilecek. Ve her UserDetailsService @AutoWired edildiğinde bu enjekte edilecek!
 @RequiredArgsConstructor
 public class AppUserDetailsService implements UserDetailsService {
+    // UserDetailsService : Spring Security'nin kullanıcı yükleme interface'i
 
     private final UserRepository userRepository;
 

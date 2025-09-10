@@ -1,6 +1,5 @@
 package com.iremayvaz.model.jwt;
 
-import com.iremayvaz.model.entity.User;
 import com.iremayvaz.model.userDetails.AppUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -12,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +21,15 @@ import java.util.function.Function;
 public class JwtService {
 
     public static final String SECRET_KEY = "R8HFcGTlOF8shhqFqp+o8FADLCohD6C5v2bHbfbQhnQ=";
-    private static final Duration ACCESS_TTL = Duration.ofHours(2);
+    private static final Integer ACCESS_TTL = 1000*60*30; // 30 dakika
 
     public String generateToken(UserDetails userDetails){
         Map<String, Object> claimsMap = buildClaims(userDetails);
         Date now = new Date();
-        Date expiredDate = new Date(now.getTime() + ACCESS_TTL.toMillis());
+        Date expiredDate = new Date(now.getTime() + ACCESS_TTL);
 
         return Jwts.builder() // Token oluşturucu başlat
-                .setSubject(userDetails.getUsername()) // Kullanıcı adını token payload'una koy
+                .setSubject(userDetails.getUsername()) // Email, token payload'una koyuluyor
                 .addClaims(claimsMap)
                 .setIssuedAt(now) // Token ne zaman oluşturuldu?
                 .setExpiration(expiredDate) // Token ne kadar geçerli?
@@ -43,21 +41,24 @@ public class JwtService {
     public Map<String, Object> buildClaims(UserDetails userDetails){ // Doğrulanmış kullanıcının token'ı içine koyulacak claim'leri hazırlar.
         Map<String, Object> claims = new HashMap<>();
 
-        if(userDetails instanceof AppUserDetails appUserDetails){
+        if(userDetails instanceof AppUserDetails appUserDetails){ // userDetails parametresi AppUserDetails türünden mi?
             claims.put("user_id", appUserDetails.getId());
-            claims.put("email", appUserDetails.getEmail());
-            claims.put("role", appUserDetails.getRoleName().name());
-            claims.put("permissions", appUserDetails.getPermissions()
+            claims.put("role", appUserDetails.getRoleName().name()); // String
+            claims.put("permissions", appUserDetails.getPermissions() // izinleri al
                                                     .stream()
-                                                    .map(Enum::name)
-                                                    .toList());
-        } else {
+                                                    .map(Enum::name) // enum'dan string'e çevir
+                                                    .toList()); // list yap
+        } else { // AppUserDetails değilse
             var all = userDetails.getAuthorities()
                                  .stream()
                                  .map(org.springframework.security.core.GrantedAuthority::getAuthority)
                                  .toList();
 
-            claims.put("role", all.stream().filter(a -> a.startsWith("ROLE_")).toList());
+            var role = all.stream().filter(a -> a.startsWith("ROLE_")) // "ROLE_" ile başlayanları al
+                    .map(r -> r.substring(5)) // "ROLE_" : 5 karakter onu çık
+                    .findFirst() // ilk rolü al
+                    .orElse("USER"); // ya da USER geç
+            claims.put("role", role); // String
             claims.put("permissions", all.stream().filter(a -> !a.startsWith("ROLE_")).toList());
         }
         return claims;

@@ -10,5 +10,6 @@ public enum Permission {
     PRODUCT_LIST,
     PRODUCT_UPDATE,
     PRODUCT_DELETE,
-    PRODUCT_ADD
+    PRODUCT_ADD,
+    ME
 }

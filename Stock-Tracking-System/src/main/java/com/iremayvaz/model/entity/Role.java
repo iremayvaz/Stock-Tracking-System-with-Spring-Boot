@@ -21,7 +21,8 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING) @Column(unique = true)
+    @Enumerated(EnumType.STRING)
+    @Column(unique = true)
     private RoleName name;
 
     @ElementCollection(fetch = FetchType.EAGER) // Set<Permission> bir entity değil o yüzden @ManyToMany yerine @ElementCollection. EAGER : role yüklenirken izinler hemen çekilir.

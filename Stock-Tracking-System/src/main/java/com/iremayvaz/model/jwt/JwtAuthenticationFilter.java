@@ -5,7 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,16 +16,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // JWT tabanlı kimlik doğrulama filtresi
-
-    @Autowired
-    private JwtService jwtService; // Token çözmek için
-
-    @Autowired
-    private UserDetailsService userDetailsService; // User bilgilerini DB'den almak için
 
     // OncePerRequestFilter, kullanıcıdan gelen isteğin Controller'a düşmeden kontrol edilmesini sağlar.
     // Her istek için bir kez çalışır
+
+    private final JwtService jwtService; // Token çözmek için
+    private final UserDetailsService userDetailsService; // User bilgilerini DB'den almak için
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, // gelen istek
@@ -51,9 +49,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // JWT taban
             username = jwtService.getUsernameByToken(token);
             if(username != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null){ // Request daha önce doğrulanmamış
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username); // Kullanıcı DB'de var mı?
 
-                if(userDetails != null && jwtService.isTokenExpired(token)){
+                if(userDetails != null && !jwtService.isTokenExpired(token)){
                     // Kişiyi SecurityContext'e koyabilirim.
                     // Bu da kullanıcıyı içeri alabilirim demek
                     UsernamePasswordAuthenticationToken authentication =

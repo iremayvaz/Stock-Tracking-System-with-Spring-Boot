@@ -1,6 +1,5 @@
 package com.iremayvaz.model.dto;
 
-import com.iremayvaz.model.entity.enums.RoleName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,8 +14,10 @@ public class DtoEmployee {
     // Kullanıcıya sistemden dönen veriyi ilettir
     // Bu sebeple validasyon gerekmez.
 
+    private Long id;
     private String firstName;
     private String lastName;
-    private RoleName position;
+    private String roleName; // sadece rol adı gelecek
+    private String email;
 
 }

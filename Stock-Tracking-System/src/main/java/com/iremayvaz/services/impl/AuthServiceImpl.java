@@ -4,16 +4,19 @@ import com.iremayvaz.model.dto.DtoUser;
 import com.iremayvaz.model.dto.DtoUserIU;
 import com.iremayvaz.model.entity.Employee;
 import com.iremayvaz.model.entity.RefreshToken;
+import com.iremayvaz.model.entity.Role;
 import com.iremayvaz.model.entity.User;
 import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.JwtService;
 import com.iremayvaz.repository.RefreshTokenRepository;
+import com.iremayvaz.repository.RoleRepository;
 import com.iremayvaz.repository.UserRepository;
 import com.iremayvaz.services.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RoleRepository roleRepository;
     private final AuthenticationProvider authenticationProvider;
     private final JwtService jwtService;
 
@@ -43,6 +47,10 @@ public class AuthServiceImpl implements AuthService {
 
         user.setEmail(dtoUserIU.getEmail());
         user.setPassword(passwordEncoder.encode(dtoUserIU.getPassword()));
+
+        Role userRole = roleRepository.findByName(dtoUserIU.getPosition())
+                .orElseThrow(() -> new IllegalArgumentException("Role not found : " + dtoUserIU.getPosition()));
+        user.setRole(userRole);
 
         Employee newEmployee = saveEmployeeInfos(dtoUserIU);
         user.attachEmployee(newEmployee);
@@ -60,8 +68,6 @@ public class AuthServiceImpl implements AuthService {
         employee.setFirstName(dtoUserIU.getFirstName());
         employee.setLastName(dtoUserIU.getLastName());
         employee.setPhoneNum(dtoUserIU.getPhoneNum());
-        employee.setEmail(dtoUserIU.getEmail());
-        employee.setPosition(dtoUserIU.getPosition());
         employee.setGender(dtoUserIU.getGender());
 
         return employee;
@@ -70,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
     private RefreshToken createRefreshToken(User user){
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setRefreshToken(UUID.randomUUID().toString());
-        refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000*60*60*4)); // 4 saat
+        refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000*60*60)); // 1 saat
         refreshToken.setUser(user);
 
         return refreshToken;

@@ -1,10 +1,11 @@
 package com.iremayvaz.model.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -35,12 +36,14 @@ public class DtoProductIU {
     private String size;
 
     // ÜRÜN FİYATI
-    @NotBlank(message = "Ürünün fiyatını giriniz!")
-    private String price;
+    @NotNull(message = "Ürünün fiyatını giriniz!")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Fiyat 0'dan büyük olmalı!")
+    private BigDecimal price;
 
     // ÜRÜN ADEDİ
-    @NotBlank(message = "Ürünün adedini giriniz!")
-    private String number;
+    @NotNull(message = "Ürünün adedini giriniz!")
+    @Min(value = 0, message = "Stok miktarı 0 veya pozitif olmalı!")
+    private Integer stockQuantity;
 
     // ÜRÜN AÇIKLAMASI
     private String explanation;

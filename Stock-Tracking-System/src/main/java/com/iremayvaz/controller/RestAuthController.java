@@ -5,12 +5,13 @@ import com.iremayvaz.model.dto.DtoUserIU;
 import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.RefreshTokenRequest;
+import org.springframework.http.ResponseEntity;
 
 public interface RestAuthController {
 
-    public DtoUser register(DtoUserIU dtoUserIU); // Giriş ekranına yönlendir
+    public ResponseEntity<DtoUser> register(DtoUserIU dtoUserIU); // Giriş ekranına yönlendir
 
-    public AuthResponse login(AuthRequest existingUser); // LOGIN
+    public ResponseEntity<AuthResponse> login(AuthRequest existingUser); // LOGIN
 
-    public AuthResponse refreshToken(RefreshTokenRequest request);
+    public ResponseEntity<AuthResponse> refreshToken(RefreshTokenRequest request);
 }

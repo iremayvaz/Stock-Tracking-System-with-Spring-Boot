@@ -3,14 +3,15 @@ package com.iremayvaz.controller;
 import com.iremayvaz.model.dto.DtoProduct;
 import com.iremayvaz.model.dto.DtoProductIU;
 import com.iremayvaz.model.entity.Product;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface RestProductController {
 
-    public DtoProduct addProduct(DtoProductIU addProductRequest);
+    public ResponseEntity<DtoProduct> addProduct(DtoProductIU addProductRequest);
 
-    public DtoProduct updateProductInfos(DtoProductIU updateProductRequest);
+    public DtoProduct updateProductInfos(String barcode, DtoProductIU updateProductRequest);
 
     public void deleteProduct(String barcode);
 
