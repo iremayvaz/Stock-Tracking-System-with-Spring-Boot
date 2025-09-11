@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -40,7 +39,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         var refreshToken = refreshTokenRepository.findByRefreshToken(request.getRefreshToken())
                 .orElseThrow(() -> new IllegalArgumentException("REFRESH TOKEN GEÇERSİZ! " + request.getRefreshToken()));
 
-        if(!isRefreshTokenExpired(refreshToken.getExpireDate())){ // token expire olduysa TEMİZLENMELİ Mİ?
+        if(isRefreshTokenExpired(refreshToken.getExpireDate())){ // token expire olduysa TEMİZLENMELİ Mİ?
             throw new IllegalArgumentException("REFRESH TOKEN EXPIRE OLMUŞ : " + request.getRefreshToken());
         }
 

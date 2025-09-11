@@ -4,6 +4,9 @@ import com.iremayvaz.model.entity.Employee;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.text.Normalizer;
+import java.util.Locale;
+
 @UtilityClass
 // Sınıfı final yapar
 // Tüm alan ve metotlar otomatik static olur

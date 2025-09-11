@@ -22,7 +22,7 @@ public class Role {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private RoleName name;
 
     @ElementCollection(fetch = FetchType.EAGER) // Set<Permission> bir entity değil o yüzden @ManyToMany yerine @ElementCollection. EAGER : role yüklenirken izinler hemen çekilir.

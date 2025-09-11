@@ -42,18 +42,16 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-    @Transactional
     @Override
-    public DtoProduct updateProductInfos(DtoProductIU updateProductRequest) {
+    public DtoProduct updateProductInfos(Long id, DtoProductIU updateProductRequest) {
         DtoProduct dto = new DtoProduct();
 
-        Product product = productRepository.findByBarcode(updateProductRequest.getBarcode())
-                .orElseThrow(() -> new IllegalArgumentException(""));
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Girilen barkoda ait ürün kaydı bulunamadı!"));
 
         if(product.getProductName().equals(updateProductRequest.getProductName())){ product.setProductName(updateProductRequest.getProductName());}
         if(product.getCategory().equals(updateProductRequest.getCategory())){ product.setCategory(updateProductRequest.getCategory());}
         if(product.getColor().equals(updateProductRequest.getColor())){ product.setColor(updateProductRequest.getColor());}
-        if(product.getExplanation().equals(updateProductRequest.getExplanation())){ product.setExplanation(updateProductRequest.getExplanation());}
         if(product.getPrice().equals(updateProductRequest.getPrice())){ product.setPrice(updateProductRequest.getPrice());}
         if(product.getStockQuantity().equals(updateProductRequest.getStockQuantity())){ product.setStockQuantity(updateProductRequest.getStockQuantity());}
         if(product.getSize().equals(updateProductRequest.getSize())){ product.setSize(updateProductRequest.getSize());}
@@ -64,10 +62,9 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-    @Transactional
     @Override
-    public void deleteProduct(String barcode) {
-        Optional<Product> optional = productRepository.findByBarcode(barcode);
+    public void deleteProduct(Long id) {
+        Optional<Product> optional = productRepository.findById(id);
         if(optional.isPresent()){
             productRepository.delete(optional.get());
         } else {
@@ -78,13 +75,13 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly=true)
     @Override
     public List<DtoProduct> filterProduct(String column, String content) {
-        DtoProduct dto = new DtoProduct();
         List<DtoProduct> dtoProducts = new ArrayList<>();
 
         var spec  = ProductSpecifications.filterByColumn(column, content);
         List<Product> filteredProducts = productRepository.findAll(spec);
 
         for(Product p : filteredProducts){
+            DtoProduct dto = new DtoProduct();
             BeanUtils.copyProperties(p, dto);
             dtoProducts.add(dto);
         }

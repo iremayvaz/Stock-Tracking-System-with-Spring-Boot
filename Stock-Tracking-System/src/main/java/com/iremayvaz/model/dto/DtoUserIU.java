@@ -2,10 +2,7 @@ package com.iremayvaz.model.dto;
 
 import com.iremayvaz.model.entity.enums.Gender;
 import com.iremayvaz.model.entity.enums.RoleName;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +25,7 @@ public class DtoUserIU {
     private String firstName;
 
     @Size(min=2, max=30, message = "Soyisim en az 2 en fazla 30 karakter uzunluğunda olabilir!")
-    @NotBlank(message = "Email girilmeli!")
+    @NotBlank(message = "Soyisim girilmeli!")
     private String lastName;
 
     @Pattern(regexp = "^5\\d{9}$", message = "Telefon numarasını başında 0 olmadan giriniz!")
@@ -44,9 +41,9 @@ public class DtoUserIU {
             message="En az bir büyük harf ve bir rakam içermeli")
     private String password;
 
-    @NotBlank(message = "Unvan girilmeli!")
+    @NotNull(message = "Unvan girilmeli!")
     private RoleName position;
 
-    @NotBlank(message = "Cinsiyet boş bırakılamaz!")
+    @NotNull(message = "Cinsiyet boş bırakılamaz!")
     private Gender gender;
 }

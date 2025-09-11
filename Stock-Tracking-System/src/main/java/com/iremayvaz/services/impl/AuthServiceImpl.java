@@ -9,6 +9,7 @@ import com.iremayvaz.model.entity.User;
 import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.JwtService;
+import com.iremayvaz.repository.EmployeeRepository;
 import com.iremayvaz.repository.RefreshTokenRepository;
 import com.iremayvaz.repository.RoleRepository;
 import com.iremayvaz.repository.UserRepository;
@@ -16,7 +17,7 @@ import com.iremayvaz.services.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +25,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Date;
 import java.util.UUID;
@@ -33,6 +35,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RoleRepository roleRepository;
@@ -45,32 +48,45 @@ public class AuthServiceImpl implements AuthService {
         DtoUser dto = new DtoUser();
         User user = new User();
 
-        user.setEmail(dtoUserIU.getEmail());
-        user.setPassword(passwordEncoder.encode(dtoUserIU.getPassword()));
+        var emailExists = userRepository.findByEmail(dtoUserIU.getEmail());
+        if(emailExists.isPresent()){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email zaten kayıtlı");
+        } else {
 
-        Role userRole = roleRepository.findByName(dtoUserIU.getPosition())
-                .orElseThrow(() -> new IllegalArgumentException("Role not found : " + dtoUserIU.getPosition()));
-        user.setRole(userRole);
+            user.setEmail(dtoUserIU.getEmail());
+            user.setPassword(passwordEncoder.encode(dtoUserIU.getPassword()));
 
-        Employee newEmployee = saveEmployeeInfos(dtoUserIU);
-        user.attachEmployee(newEmployee);
+            Role userRole = roleRepository.findByName(dtoUserIU.getPosition())
+                    .orElseThrow(() -> new IllegalArgumentException("Role not found : " + dtoUserIU.getPosition()));
+            user.setRole(userRole);
 
-        User savedUser = userRepository.save(user);
-        BeanUtils.copyProperties(savedUser, dto);
+            Employee newEmployee = saveEmployeeInfos(dtoUserIU);
+            user.attachEmployee(newEmployee);
 
-        return dto;
+            User savedUser = userRepository.save(user);
+            BeanUtils.copyProperties(savedUser, dto);
+
+            return dto;
+        }
     }
 
     private Employee saveEmployeeInfos(DtoUserIU dtoUserIU){
         Employee employee = new Employee();
 
-        employee.setTck_no(dtoUserIU.getTck_no());
-        employee.setFirstName(dtoUserIU.getFirstName());
-        employee.setLastName(dtoUserIU.getLastName());
-        employee.setPhoneNum(dtoUserIU.getPhoneNum());
-        employee.setGender(dtoUserIU.getGender());
+        var tcknoExists = employeeRepository.findByEmail(dtoUserIU.getEmail());
+        var phoneExists = employeeRepository.findByEmail(dtoUserIU.getEmail());
 
-        return employee;
+        if(tcknoExists.isPresent() || phoneExists.isPresent()){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email zaten kayıtlı");
+        } else {
+            employee.setTck_no(dtoUserIU.getTck_no());
+            employee.setFirstName(dtoUserIU.getFirstName());
+            employee.setLastName(dtoUserIU.getLastName());
+            employee.setPhoneNum(dtoUserIU.getPhoneNum());
+            employee.setGender(dtoUserIU.getGender());
+
+            return employee;
+        }
     }
 
     private RefreshToken createRefreshToken(User user){

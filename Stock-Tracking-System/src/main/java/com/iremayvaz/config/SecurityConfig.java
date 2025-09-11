@@ -24,7 +24,7 @@ public class SecurityConfig {
 
     public static final String LOGIN = "/login";
     public static final String REGISTER = "/register";
-    public static final String REFRESH_TOKEN = "/refreshToken";
+    public static final String REFRESH_TOKEN = "/refresh-token";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter; // Gelen isteğin header'ını kontrol eder
     private final UserDetailsService userDetailsService; // AppUserDetailsService gelecek Spring Context'ten

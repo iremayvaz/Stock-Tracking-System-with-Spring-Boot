@@ -24,7 +24,7 @@ public class Employee {
     @JoinColumn(name = "id")
     private User user;
 
-    @Column(name = "tck_no", unique = true, nullable = false)
+    @Column(name = "tck_no", nullable = false)
     private String tck_no;
 
     @Column(name = "first_name")
@@ -33,20 +33,8 @@ public class Employee {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "phone_number", unique = true)
+    @Column(name = "phone_number")
     private String phoneNum;
-
-    /*
-    * DUPLICATED VALUES BETWEEN USER - EMPLOYEE
-    *
-    *  @Column(name = "email", unique = true, nullable = false)
-    private String email;
-
-    @Column(name = "position")
-    @Enumerated(EnumType.STRING)
-    private RoleName position;
-
-    * */
 
     @Column(name = "gender")
     @Enumerated(EnumType.STRING)
