@@ -1,15 +1,19 @@
 package com.iremayvaz.exceptionHandler;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import java.time.Instant;
+import java.util.Map;
 
 @RestControllerAdvice // @RestController sınıfları için global exception yakalayıcı tanımlar.
 public class GlobalExceptionHandler {
@@ -51,6 +55,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body("Zaten kayıtlı veri" + ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest req) {
+
+        Map<String, Object> body = Map.<String, Object>of(
+                "timestamp", Instant.now().toString(),
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", HttpStatus.FORBIDDEN.getReasonPhrase(),
+                "message", "Access Denied",
+                "path", req.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     @ExceptionHandler(Exception.class)
