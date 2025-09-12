@@ -71,6 +71,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuth(
+            AuthenticationException ex, HttpServletRequest req) {
+
+        Map<String, Object> body = Map.<String, Object>of(
+                "timestamp", Instant.now().toString(),
+                "status", HttpStatus.UNAUTHORIZED.value(),
+                "error", HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "message", ex.getMessage(),
+                "path", req.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     // Yukarıdaki metodlarda yakalanmayan tüm hatalar buraya düşer.
     public ResponseEntity<String> handleGeneralException(Exception ex) {
