@@ -1,21 +1,28 @@
 package GUI;
 
+import client.AppContext;
 import client.Client;
+import model.dto.DtoEmployee;
+import model.login.AuthRequest;
 
 import javax.swing.*;
 
+import java.util.concurrent.ExecutionException;
+
+import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
+import static javax.swing.JOptionPane.WARNING_MESSAGE;
+
 public class LoginPage extends javax.swing.JFrame {
 
-    private static final String AUTH_LOGIN    = "/login";
-    private final Client client = new Client(AUTH_LOGIN);
+    private static final String AUTH_LOGIN = "/login";
+    private static final String AUTH_ME    = "/employees/me";
+    private final Client apiClient = AppContext.getClient();
 
-    //getEmail from JTextField
-    public String getLoginEmail() {
-        return txt_email.getText();
-    }
+    // from JTextField
+    public String getEmail() { return txt_email.getText(); }
 
-    //getPassword from JPasswordField
-    public String getLoginPassword() {
+    // from JPasswordField
+    public String getPassword() {
         char[] password = pass_password.getPassword();
         return String.valueOf(password);
     }
@@ -46,20 +53,14 @@ public class LoginPage extends javax.swing.JFrame {
                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
                 new java.awt.Font("Sitka Text", java.awt.Font.BOLD, 14)));
 
-        // Resource: src/main/resources/cp2project1/indir.png
-        java.net.URL iconUrl = getClass().getResource("/cp2project1/indir.png");
-        if (iconUrl != null) {
-            lbl_icon.setIcon(new javax.swing.ImageIcon(iconUrl));
-        }
-
         lbl_email.setText("Email");
         lbl_password.setText("Password");
 
         btn_register.setText("Register");
-        //btn_register.addActionListener(evt -> btn_registerActionPerformed());
+        btn_register.addActionListener(evt -> btn_registerActionPerformed());
 
         btn_login.setText("Login");
-        //btn_login.addActionListener(evt -> btn_loginActionPerformed());
+        btn_login.addActionListener(evt -> btn_loginActionPerformed());
 
         lbl_sts.setFont(new java.awt.Font("Sitka Text", java.awt.Font.ITALIC, 14));
         lbl_sts.setForeground(new java.awt.Color(255, 0, 0));
@@ -128,38 +129,87 @@ public class LoginPage extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    /*private void btn_registerActionPerformed() {
-        Register loginToRegister = new Register();
+    private void btn_registerActionPerformed() {
+        RegisterPage loginToRegister = new RegisterPage();
         loginToRegister.setVisible(true);
         this.dispose();
     }
 
     private void btn_loginActionPerformed() {
-        String email = getLoginEmail();
-        String password = getLoginPassword();
+        String email = getEmail();
+        String password = getPassword();
 
-        if (DatabaseManager.login(email, password)) {
+        if (email.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(rootPane,
-                    "Logged in successfully!",
-                    "SUCCESSFULLY!",
-                    INFORMATION_MESSAGE);
-
-            if (!DatabaseManager.checkPermission()) {
-                Product_report loginToReport = new Product_report();
-                loginToReport.setVisible(true);
-                this.dispose();
-            } else {
-                Product_add loginToAddProduct = new Product_add();
-                loginToAddProduct.setVisible(true);
-                this.dispose();
-            }
-        } else {
-            JOptionPane.showMessageDialog(rootPane,
-                    "Wrong email and password match!",
-                    "WARNING",
+                    "E-posta ve şifre zorunludur!",
+                    "WARNING!",
                     WARNING_MESSAGE);
+            return;
         }
-    }*/
+
+        AuthRequest request = new AuthRequest();
+        request.setEmail(email);
+        request.setPassword(password);
+
+        // butonu kilitle, imleci bekleme yap:
+        btn_login.setEnabled(false);
+        setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+
+        new javax.swing.SwingWorker<DtoEmployee, Void>() {
+            @Override
+            protected DtoEmployee doInBackground() throws Exception{
+                boolean login = apiClient.login(AUTH_LOGIN, request);
+                if (!login) { throw new IllegalStateException("Geçersiz e-posta veya şifre!"); }
+
+                try {
+                    return apiClient.me(AUTH_ME);
+                } catch (Exception ignore){
+                    return null;
+                }
+            }
+
+            @Override
+            protected void done(){
+                try {
+                    DtoEmployee me = get();
+                    String message = (me != null && me.getEmail() != null)
+                            ? "Giriş başarılı: " + me.getEmail()
+                            : "Giriş başarılı";
+
+                    JOptionPane.showMessageDialog(LoginPage.this, message);
+
+                    if(apiClient.hasAnyRole("ROLE_VISITOR")) {
+                        new ProductListPage().setVisible(true);
+                    } else if(apiClient.hasAnyRole("ROLE_CONSULTANT")) {
+                        new EmployeeListPage().setVisible(true);
+                    } else {
+                        new MainPage().setVisible(true);
+                    }
+
+                    LoginPage.this.dispose();
+                } catch (java.util.concurrent.ExecutionException e) {
+                    Throwable cause = e.getCause();
+                    JOptionPane.showMessageDialog(
+                            LoginPage.this,
+                            (cause != null ? cause.getMessage() : "Bilinmeyen hata"),
+                            "Giriş başarısız",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    JOptionPane.showMessageDialog(
+                            LoginPage.this,
+                            "İşlem kesildi.",
+                            "Giriş başarısız",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } finally {
+                    btn_login.setEnabled(true);
+                    setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                }
+            }
+        }.execute();
+    }
 
     public static void main(String[] args) {
         // Nimbus varsa kullan, yoksa default Look&Feel kalsın

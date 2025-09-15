@@ -7,12 +7,7 @@ import model.dto.DtoUserIU;
 import model.entity.enums.Gender;
 import model.entity.enums.RoleName;
 
-import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
-import static javax.swing.JOptionPane.*;
-import javax.swing.JTextField;
 
 public class RegisterPage extends javax.swing.JFrame {
 

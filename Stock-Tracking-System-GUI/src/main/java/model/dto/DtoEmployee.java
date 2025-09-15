@@ -10,4 +10,8 @@ public class DtoEmployee {
     public String getRoleName() {
         return roleName;
     }
+
+    public String getEmail() {
+        return email;
+    }
 }

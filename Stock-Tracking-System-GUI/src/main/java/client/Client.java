@@ -1,6 +1,7 @@
 package client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import model.dto.DtoEmployee;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.Base64;
+import java.util.stream.Collectors;
 
 public class Client {
 
@@ -164,55 +166,15 @@ public class Client {
         }
     }
 
-    /** /auth/me → DtoEmployee (rol adı: roleName) */
-    public DtoEmployee me() throws IOException {
-        if (meCache != null) return meCache;
-
-        Request request = new Request.Builder()
-                .url(baseUrl + AUTH_ME)
-                .get()
-                .build();
-
-        try (Response resp = http.newCall(request).execute()) {
-            if (resp.isSuccessful()) {
-                meCache = om.readValue(resp.body().string(), DtoEmployee.class);
-                return meCache;
-            }
-            debug("me() failed", resp);
-            throw new IOException("Unauthorized: " + resp.code());
-        }
-    }
-
-    /* ================= ROLE / PERMISSION ================= */
-
-    /** Tek rol kullanıyorsun: DtoEmployee.roleName veya JWT claim fallback */
-    public boolean hasRole(String expected) {
-        if (expected == null) return false;
-        String needle = expected.toLowerCase(Locale.ROOT);
-
-        // 1) DTO üzerinden
-        try {
-            DtoEmployee u = me();
-            if (u.getRoleName() != null && u.getRoleName().equalsIgnoreCase(expected)) return true;
-        } catch (Exception ignore) {}
-
-        // 2) JWT claim fallback (role/roles/authorities)
-        Map<String,Object> claims = parseJwtClaims();
-        return claimsContainIgnoreCase(claims, List.of("role","roles","authorities"), needle);
-    }
-
-    /** DTO’da izin listesi yoksa JWT’den (authorities/permissions/scope) bakar */
-    public boolean hasPermission(String perm) {
-        if (perm == null) return false;
-        Map<String,Object> claims = parseJwtClaims();
-        return claimsContainIgnoreCase(claims, List.of("permissions","authorities","scope"), perm.toLowerCase(Locale.ROOT));
-    }
 
     /* ============== PRODUCTS ================= */
 
-    public List<DtoProduct> listProducts() throws IOException {
-        Request req = new Request.Builder().url(baseUrl + PRODUCTS).get().build();
-        try (Response resp = http.newCall(req).execute()) {
+    public List<DtoProduct> listProducts(String endpoint) throws IOException {
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint)
+                .get()
+                .build();
+        try (Response resp = client.newCall(req).execute()) {
             if (resp.isSuccessful()) {
                 DtoProduct[] arr = om.readValue(resp.body().string(), DtoProduct[].class);
                 return Arrays.asList(arr);
@@ -222,40 +184,102 @@ public class Client {
         }
     }
 
-    public boolean addProduct(DtoProduct p) throws IOException {
+    public boolean addProduct(String endpoint,DtoProduct p) throws IOException {
         String json = om.writeValueAsString(p);
         Request req = new Request.Builder()
-                .url(baseUrl + PRODUCTS)
+                .url(BASE_URL + endpoint)
                 .post(RequestBody.create(json, MediaType.parse("application/json")))
                 .build();
-        try (Response resp = http.newCall(req).execute()) {
+        try (Response resp = client.newCall(req).execute()) {
             if (resp.code() == 200 || resp.code() == 201) return true;
             debug("addProduct failed", resp);
             return false;
         }
     }
 
-    public boolean updateProduct(String barcode, DtoProduct p) throws IOException {
+    public boolean updateProduct(String endpoint,String barcode, DtoProduct p) throws IOException {
         String json = om.writeValueAsString(p);
         Request req = new Request.Builder()
-                .url(baseUrl + PRODUCTS + "/" + url(barcode))
+                .url(BASE_URL + endpoint + "/" + url(barcode))
                 .put(RequestBody.create(json, MediaType.parse("application/json")))
                 .build();
-        try (Response resp = http.newCall(req).execute()) {
+        try (Response resp = client.newCall(req).execute()) {
             if (resp.code() == 200) return true;
             debug("updateProduct failed", resp);
             return false;
         }
     }
 
-    public boolean deleteProduct(String barcode) throws IOException {
+    public boolean deleteProduct(String endpoint, String barcode) throws IOException {
         Request req = new Request.Builder()
-                .url(baseUrl + PRODUCTS + "/" + url(barcode))
+                .url(BASE_URL + endpoint + "/" + url(barcode))
                 .delete()
                 .build();
-        try (Response resp = http.newCall(req).execute()) {
+        try (Response resp = client.newCall(req).execute()) {
             if (resp.code() == 200 || resp.code() == 204) return true;
             debug("deleteProduct failed", resp);
+            return false;
+        }
+    }
+    /* ============== EMPLOYEES ================= */
+
+    public DtoEmployee me(String endpoint) throws IOException {
+        if (meCache != null) return meCache;
+
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint)
+                .get()
+                .build();
+
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.isSuccessful()) {
+                DtoEmployee dto = om.readValue(resp.body().string(), DtoEmployee.class);
+                this.meCache = dto;
+                return dto;
+            } else if (resp.code() == 401) {
+                throw new IllegalStateException("Oturum süresi doldu. Tekrar giriş yapın.");
+            }
+            throw new IllegalStateException("Me sorgusu başarısız: HTTP " + resp.code());
+        }
+    }
+
+
+    public List<DtoEmployee> listEmployees(String endpoint) throws IOException {
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint)
+                .get()
+                .build();
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.isSuccessful()) {
+                DtoEmployee[] arr = om.readValue(resp.body().string(), DtoEmployee[].class);
+                return Arrays.asList(arr);
+            }
+            debug("listEmployees failed", resp);
+            throw new IOException("listEmployees HTTP " + resp.code());
+        }
+    }
+
+    public boolean updateEmployee(String endpoint,String barcode, DtoEmployee p) throws IOException {
+        String json = om.writeValueAsString(p);
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint + "/" + url(barcode))
+                .put(RequestBody.create(json, MediaType.parse("application/json")))
+                .build();
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.code() == 200) return true;
+            debug("updateEmployee failed", resp);
+            return false;
+        }
+    }
+
+    public boolean deleteEmployee(String endpoint, String barcode) throws IOException {
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint + "/" + url(barcode))
+                .delete()
+                .build();
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.code() == 200 || resp.code() == 204) return true;
+            debug("deleteEmployee failed", resp);
             return false;
         }
     }
@@ -279,7 +303,7 @@ public class Client {
             String[] parts = accessToken.split("\\.");
             if (parts.length < 2) return Map.of();
             String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            return om.readValue(payload, Map.class);
+            return om.readValue(payload, new TypeReference<Map<String,Object>>(){});
         } catch (Exception e) {
             return Map.of();
         }
@@ -311,7 +335,68 @@ public class Client {
         } catch (Exception ignored) {}
     }
 
-    /* Gerekirse dışarı ver */
     public String getAccessToken() { return accessToken; }
     public String getRefreshToken() { return refreshToken; }
+
+    private static Set<String> toStringSet(Object v) {
+        if (v == null) return Set.of();
+        if (v instanceof Collection<?> c) {
+            return c.stream().filter(Objects::nonNull).map(Object::toString).collect(Collectors.toSet());
+        }
+        if (v instanceof String s) { // "ROLE_USER ROLE_ADMIN" gibi tek string de olabilir
+            String[] parts = s.trim().split("[,\\s]+");
+            return Arrays.stream(parts).filter(p -> !p.isBlank()).collect(Collectors.toSet());
+        }
+        return Set.of(v.toString());
+    }
+
+    public Set<String> getRolesFromToken() {
+        Map<String,Object> c = parseJwtClaims();
+        Set<String> out = new java.util.HashSet<>();
+
+        // Senin şema: tekil "role" (prefixsiz)
+        Object single = c.get("role");
+        if (single != null) {
+            String r = single.toString();
+            if (!r.isBlank()) {
+                out.add(r);              // "ADMIN"
+                out.add("ROLE_" + r);    // "ROLE_ADMIN"
+            }
+        }
+
+        // İleride sunucuyu değiştirirsen diye fallback'ler:
+        Object rolesArr = c.get("roles");
+        if (rolesArr != null) out.addAll(toStringSet(rolesArr));
+
+        Object auth = c.get("authorities");
+        if (auth != null) out.addAll(toStringSet(auth));
+
+        return out;
+    }
+
+    public Set<String> getPermissionsFromToken() {
+        Map<String,Object> c = parseJwtClaims();
+        Object p = c.get("permissions");
+        return toStringSet(p);
+    }
+
+    public boolean hasRole(String role) {
+        return getRolesFromToken().contains(role);
+    }
+
+    public boolean hasAnyRole(String... roles) {
+        Set<String> set = getRolesFromToken();
+        for (String r: roles) if (set.contains(r)) return true;
+        return false;
+    }
+
+    public boolean hasPermission(String perm) {
+        return getPermissionsFromToken().contains(perm);
+    }
+
+    public boolean hasAllPermissions(String... perms) {
+        Set<String> set = getPermissionsFromToken();
+        for (String p: perms) if (!set.contains(p)) return false;
+        return true;
+    }
 }
