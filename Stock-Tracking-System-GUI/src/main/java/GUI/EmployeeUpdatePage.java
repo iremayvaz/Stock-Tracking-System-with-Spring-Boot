@@ -7,6 +7,9 @@ import javax.swing.JTextField;
 
 public class EmployeeUpdatePage extends javax.swing.JFrame {
 
+    private static final String EMPLOYEES        = "/employees";
+    private static final String UPDATE_EMPLOYEES = EMPLOYEES + "/update"; //   /employees/update
+
     //check data (iptalde sonsuz döngü fix)
     public void checkData(JTextField field, String regex, String input, String fieldName) {
         Pattern pattern = Pattern.compile(regex);

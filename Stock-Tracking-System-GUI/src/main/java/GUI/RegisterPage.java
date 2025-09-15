@@ -1,5 +1,13 @@
 package GUI;
 
+import client.AppContext;
+import client.Client;
+import model.dto.DtoUser;
+import model.dto.DtoUserIU;
+import model.entity.enums.Gender;
+import model.entity.enums.RoleName;
+
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
@@ -8,72 +16,37 @@ import javax.swing.JTextField;
 
 public class RegisterPage extends javax.swing.JFrame {
 
-    //getName from JTextField
-    public String getNameFromField() { return txt_name.getText().trim(); }
+    private final Client apiClient = AppContext.getClient();
 
-    //getSurname from JTextField
-    public String getSurnameFromField() { return txt_surname.getText().trim(); }
+    private static final String AUTH_REGISTER = "/register";
 
-    //getPhoneNum from JTextField
-    public String getPhoneNumFromField() { return txt_phoneNum.getText().trim(); }
+    // from JTextField
+    public String getFirstName() { return txt_name.getText().trim(); }
 
-    //getEmail from JTextField
-    public String getEmailFromField() { return txt_email.getText().trim(); }
+    public String getLastName() { return txt_surname.getText().trim(); }
 
-    //getPassword from JPasswordField
-    public String getPasswordFromField() {
+    public String getPhoneNum() { return txt_phoneNum.getText().trim(); }
+
+    public String getEmail() { return txt_email.getText().trim(); }
+
+    public String getTckNo() { return txt_tckno.getText(); }
+
+    // from JPasswordField
+    public String getPassword() {
         char[] password = pass_password.getPassword();
         return String.valueOf(password);
     }
 
-    //getPosition from JComboBox
-    public String getPositionFromField() {
-        return comboBox_position.getItemAt(comboBox_position.getSelectedIndex());
+    // from JComboBox
+    public RoleName getPosition() {
+         return comboBox_position.getItemAt(comboBox_position.getSelectedIndex());
     }
 
-    //getGender from JRadioButton
-    public char getGenderFromField() {
-        if (rBtn_male.isSelected()) return 'M';
-        if (rBtn_female.isSelected()) return 'F';
-        return '\0'; // seçilmemiş
-    }
-
-    //regex kontrolü
-    public boolean checkRegex(String regex, String input, JTextField field) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-        boolean matchFound;
-
-        if (matcher.matches()) {
-            field.setText(matcher.group());
-            matchFound = true;
-        } else {
-            field.setText("");
-            matchFound = false;
-        }
-        return matchFound;
-    }
-
-    //boşluk/eksik alan kontrolü
-    public boolean checkFullness(String name, String surname,
-                                 String email, String password,
-                                 String phoneNum, String position, char gender) {
-        boolean allFilled = !name.isEmpty() && !surname.isEmpty()
-                && !email.isEmpty() && !password.isEmpty()
-                && !phoneNum.isEmpty();
-        boolean positionOk = !"Choose...".equals(position); // FIX: == yerine equals
-        boolean genderOk = (gender == 'F' || gender == 'M');
-        return allFilled && positionOk && genderOk;
-    }
-
-    //regex'e göre uyarı
-    public void data(JTextField field, String regex, String input, String fieldName) {
-        if (!checkRegex(regex, input, field)) {
-            JOptionPane.showMessageDialog(rootPane,
-                    "Please write your " + fieldName + " correctly.",
-                    "",
-                    PLAIN_MESSAGE);
-        }
+    // from JRadioButton
+    public Gender getGender() {
+        if (rBtn_male.isSelected()) return Gender.MALE;
+        if (rBtn_female.isSelected()) return Gender.FEMALE;
+        return null;
     }
 
     public RegisterPage() { initComponents(); }
@@ -84,6 +57,7 @@ public class RegisterPage extends javax.swing.JFrame {
         pnl_register = new javax.swing.JPanel();
         btn_cancel = new javax.swing.JButton();
         btn_register = new javax.swing.JButton();
+        lbl_tckno = new javax.swing.JLabel();
         lbl_name = new javax.swing.JLabel();
         lbl_surname = new javax.swing.JLabel();
         lbl_email = new javax.swing.JLabel();
@@ -112,11 +86,12 @@ public class RegisterPage extends javax.swing.JFrame {
                 javax.swing.border.TitledBorder.TOP, new java.awt.Font("Sitka Text", 1, 14)));
 
         btn_cancel.setText("Cancel");
-        //btn_cancel.addActionListener(this::btn_cancelActionPerformed);
+        btn_cancel.addActionListener(this::btn_cancelActionPerformed);
 
         btn_register.setText("Register");
-        //btn_register.addActionListener(this::btn_registerActionPerformed);
+        btn_register.addActionListener(this::btn_registerActionPerformed);
 
+        lbl_tckno.setText("TCK number");
         lbl_name.setText("Name");
         lbl_surname.setText("Surname");
         lbl_email.setText("Email");
@@ -125,8 +100,7 @@ public class RegisterPage extends javax.swing.JFrame {
         lbl_password.setText("Password");
         lbl_gender.setText("Gender");
 
-        comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] { "Choose...", "Employee", "Accountant", "Secretary", "Boss", "Consultant", "Visitor", "Authorized" }));
+        comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(RoleName.values()));
 
         btnGroup_gender.add(rBtn_male);
         rBtn_male.setText("Male");
@@ -146,6 +120,7 @@ public class RegisterPage extends javax.swing.JFrame {
                                                 .addComponent(btn_register))
                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_registerLayout.createSequentialGroup()
                                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(lbl_tckno)
                                                         .addComponent(lbl_name)
                                                         .addComponent(lbl_surname)
                                                         .addComponent(lbl_email)
@@ -159,6 +134,7 @@ public class RegisterPage extends javax.swing.JFrame {
                                                                 .addComponent(rBtn_male)
                                                                 .addGap(45, 45, 45)
                                                                 .addComponent(rBtn_female))
+                                                        .addComponent(txt_tckno)
                                                         .addComponent(txt_phoneNum)
                                                         .addComponent(txt_email)
                                                         .addComponent(txt_surname)
@@ -171,29 +147,46 @@ public class RegisterPage extends javax.swing.JFrame {
                 pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_registerLayout.createSequentialGroup()
                                 .addGap(34, 34, 34)
+
+                                // 1) TCK NO satırı (YENİ)
+                                .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lbl_tckno)
+                                        .addComponent(txt_tckno, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+
+                                .addGap(23, 23, 23)
+
+                                // 2) Name satırı (mevcut)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_name)
-                                        .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+
                                 .addGap(23, 23, 23)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_surname)
-                                        .addComponent(txt_surname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(txt_surname, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(31, 31, 31)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_phoneNum)
-                                        .addComponent(txt_phoneNum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(txt_phoneNum, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(32, 32, 32)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(txt_email, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txt_email, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(lbl_email))
                                 .addGap(23, 23, 23)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_password)
-                                        .addComponent(pass_password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(pass_password, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(26, 26, 26)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_position)
-                                        .addComponent(comboBox_position, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(comboBox_position, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(43, 43, 43)
                                 .addGroup(pnl_registerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_gender)
@@ -205,6 +198,7 @@ public class RegisterPage extends javax.swing.JFrame {
                                         .addComponent(btn_register))
                                 .addGap(36, 36, 36))
         );
+
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -220,71 +214,45 @@ public class RegisterPage extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }
-/*
+
     private void btn_registerActionPerformed(java.awt.event.ActionEvent evt) {
-        Person newPerson = new Person();
+        DtoUserIU dto = new DtoUserIU();
 
-        if (checkFullness(getNameFromField(), getSurnameFromField(),
-                getEmailFromField(), getPasswordFromField(),
-                getPhoneNumFromField(), getPositionFromField(), getGenderFromField()))
-        {
-            // name
-            data(txt_name, "^[A-Z][a-z]+$", getNameFromField(), "name");
-            newPerson.setName(getNameFromField());
+        dto.setFirstName(getFirstName());
+        dto.setLastName(getLastName());
+        dto.setPhoneNum(getPhoneNum());
+        dto.setEmail(getEmail());
+        dto.setPassword(getPassword());
+        dto.setPosition(getPosition());
+        dto.setGender(getGender());
+        dto.setTck_no(getTckNo());
 
-            // surname
-            data(txt_surname, "^[A-Z][a-z]+$", getSurnameFromField(), "surname");
-            newPerson.setSurname(getSurnameFromField());
-
-            // phone number (10 hane, 0 ile başlamasın)
-            data(txt_phoneNum, "^[1-9][0-9]{9}$", getPhoneNumFromField(), "phone number");
-            newPerson.setPhoneNum(getPhoneNumFromField());
-
-            // email
-            data(txt_email, "^[a-z][a-z0-9_.-]+@[a-z.]+(\\.com|\\.tr|\\.net|\\.org)$", getEmailFromField(), "email");
-            newPerson.setEmail(getEmailFromField());
-
-            // password (min 8)
-            data(pass_password, "^(.{8,})$", getPasswordFromField(), "password");
-            newPerson.setPassword(getPasswordFromField());
-
-            // position
-            if (!"Choose...".equals(getPositionFromField())) {
-                newPerson.setPosition(getPositionFromField());
-            } else {
-                JOptionPane.showMessageDialog(rootPane, "Choose a valid position", "", PLAIN_MESSAGE);
+        new javax.swing.SwingWorker<DtoUser, Void>(){
+            @Override
+            protected DtoUser doInBackground() throws Exception{
+                return apiClient.register(AUTH_REGISTER, dto);
             }
 
-            // gender
-            if (getGenderFromField() == '\0') { // FIX: seçilmemiş kontrolü
-                JOptionPane.showMessageDialog(rootPane, "Select your gender", "", PLAIN_MESSAGE);
-            } else {
-                newPerson.setGender(getGenderFromField());
-            }
-
-            // son kontrol
-            if (checkFullness(newPerson.getName(), newPerson.getSurname(),
-                    newPerson.getEmail(), newPerson.getPassword(),
-                    newPerson.getPhoneNum(), newPerson.getPosition(), newPerson.getGender()))
-            {
-                // addPerson: false -> başarı; true -> email zaten kayıtlı
-                if (!DatabaseManager.addPerson(newPerson, getEmailFromField())) {
+            @Override
+            protected void done() {
+                try {
+                    DtoUser created = get();
                     JOptionPane.showMessageDialog(rootPane,
-                            "The user is successfully signed up. Now you should sign in.",
-                            "Please sign in!",
-                            INFORMATION_MESSAGE);
+                            "Kayıt başarılı: " + created.getEmail() + "Lüfen giriş yapınız.");
+
                     GUI.LoginPage toLogin = new GUI.LoginPage();
                     toLogin.setVisible(true);
-                    this.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(rootPane, "Email is already signed up.", "", WARNING_MESSAGE);
+
+                    RegisterPage.this.dispose();
+
+                } catch (IllegalStateException e) {
+                    JOptionPane.showMessageDialog(rootPane, e.getMessage(), "Uyarı", JOptionPane.WARNING_MESSAGE);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(rootPane, "Kayıt başarısız: " + e.getMessage(),
+                            "Hata", JOptionPane.ERROR_MESSAGE);
                 }
-            } else {
-                JOptionPane.showMessageDialog(rootPane, "There are missing person datas.", "", WARNING_MESSAGE);
             }
-        } else {
-            JOptionPane.showMessageDialog(rootPane, "Fill the missing boxes!", "WARNING!", WARNING_MESSAGE);
-        }
+        }.execute();
     }
 
     private void btn_cancelActionPerformed(java.awt.event.ActionEvent evt) {
@@ -305,7 +273,7 @@ public class RegisterPage extends javax.swing.JFrame {
             registerToLogin.setVisible(true);
             this.dispose();
         }
-    }*/
+    }
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
         LoginPage login = new LoginPage();
@@ -329,9 +297,10 @@ public class RegisterPage extends javax.swing.JFrame {
     private javax.swing.ButtonGroup btnGroup_gender;
     private javax.swing.JButton btn_cancel;
     private javax.swing.JButton btn_register;
-    private javax.swing.JComboBox<String> comboBox_position;
+    private javax.swing.JComboBox<RoleName> comboBox_position;
     private javax.swing.JLabel lbl_email;
     private javax.swing.JLabel lbl_gender;
+    private javax.swing.JLabel lbl_tckno;
     private javax.swing.JLabel lbl_name;
     private javax.swing.JLabel lbl_password;
     private javax.swing.JLabel lbl_phoneNum;
@@ -341,6 +310,7 @@ public class RegisterPage extends javax.swing.JFrame {
     private javax.swing.JPanel pnl_register;
     private javax.swing.JRadioButton rBtn_female;
     private javax.swing.JRadioButton rBtn_male;
+    private javax.swing.JTextField txt_tckno;
     private javax.swing.JTextField txt_email;
     private javax.swing.JTextField txt_name;
     private javax.swing.JTextField txt_phoneNum;

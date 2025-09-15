@@ -1,8 +1,13 @@
 package GUI;
 
+import client.Client;
+
 import javax.swing.*;
 
 public class LoginPage extends javax.swing.JFrame {
+
+    private static final String AUTH_LOGIN    = "/login";
+    private final Client client = new Client(AUTH_LOGIN);
 
     //getEmail from JTextField
     public String getLoginEmail() {

@@ -6,6 +6,9 @@ import javax.swing.table.DefaultTableModel;
 
 public class EmployeeListPage extends javax.swing.JFrame {
 
+    private static final String EMPLOYEES        = "/employees";
+    private static final String FILTER_EMPLOYEES = EMPLOYEES + "/filter"; //  /employees/filter
+
     public static DefaultTableModel personalList;
 
     public EmployeeListPage() {

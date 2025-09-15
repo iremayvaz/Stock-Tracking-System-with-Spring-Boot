@@ -7,6 +7,9 @@ import javax.swing.JTextField;
 
 public class ProductUpdatePage extends javax.swing.JFrame {
 
+    private static final String PRODUCTS       = "/products";
+    private static final String UPDATE_PRODUCT = PRODUCTS + "/update";
+
     //check data (Cancel'da döngüden çık)
     public void checkData(JTextField field, String regex, String input, String fieldName) {
         Pattern pattern = Pattern.compile(regex);

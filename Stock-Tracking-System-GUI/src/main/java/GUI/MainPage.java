@@ -7,6 +7,10 @@ import javax.swing.table.DefaultTableModel;
 
 public class MainPage extends javax.swing.JFrame {
 
+    private static final String PRODUCTS       = "/products";
+    private static final String ADD_PRODUCT    = PRODUCTS + "/add";
+    private static final String DELETE_PRODUCT = PRODUCTS + "/delete";
+
     public static DefaultTableModel productList;
 
     //getters (trim ile)
