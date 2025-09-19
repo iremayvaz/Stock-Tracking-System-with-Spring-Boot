@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.dto.DtoEmployee;
-import model.dto.DtoProduct;
-import model.dto.DtoUser;
-import model.dto.DtoUserIU;
+import model.dto.*;
 import model.login.AuthRequest;
 import model.login.AuthResponse;
 import okhttp3.*;
@@ -72,8 +69,6 @@ public class Client {
                 .authenticator(bearerAuthenticator)
                 .build();
     }
-
-    /* ================= AUTH ================= */
 
     public boolean login(String endpoint, AuthRequest request) throws IOException {
         String json = om.writeValueAsString(request);
@@ -166,8 +161,7 @@ public class Client {
         }
     }
 
-
-    /* ============== PRODUCTS ================= */
+    // PRODUCTS
 
     public List<DtoProduct> listProducts(String endpoint) throws IOException {
         Request req = new Request.Builder()
@@ -184,8 +178,8 @@ public class Client {
         }
     }
 
-    public boolean addProduct(String endpoint,DtoProduct p) throws IOException {
-        String json = om.writeValueAsString(p);
+    public boolean addProduct(String endpoint, DtoProductIU dtoProductIU) throws IOException {
+        String json = om.writeValueAsString(dtoProductIU);
         Request req = new Request.Builder()
                 .url(BASE_URL + endpoint)
                 .post(RequestBody.create(json, MediaType.parse("application/json")))
@@ -210,18 +204,7 @@ public class Client {
         }
     }
 
-    public boolean deleteProduct(String endpoint, String barcode) throws IOException {
-        Request req = new Request.Builder()
-                .url(BASE_URL + endpoint + "/" + url(barcode))
-                .delete()
-                .build();
-        try (Response resp = client.newCall(req).execute()) {
-            if (resp.code() == 200 || resp.code() == 204) return true;
-            debug("deleteProduct failed", resp);
-            return false;
-        }
-    }
-    /* ============== EMPLOYEES ================= */
+    // EMPLOYEES
 
     public DtoEmployee me(String endpoint) throws IOException {
         if (meCache != null) return meCache;
@@ -244,11 +227,12 @@ public class Client {
     }
 
 
-    public List<DtoEmployee> listEmployees(String endpoint) throws IOException {
+    public List<DtoEmployee> filterEmployees(String endpoint) throws IOException {
         Request req = new Request.Builder()
-                .url(BASE_URL + endpoint)
+                .url(BASE_URL + endpoint) // http://localhost:8080/employees/filter/
                 .get()
                 .build();
+
         try (Response resp = client.newCall(req).execute()) {
             if (resp.isSuccessful()) {
                 DtoEmployee[] arr = om.readValue(resp.body().string(), DtoEmployee[].class);
@@ -272,19 +256,44 @@ public class Client {
         }
     }
 
-    public boolean deleteEmployee(String endpoint, String barcode) throws IOException {
+    public <T> T getById(String endpoint, long id, Class<T> type) throws IOException {
         Request req = new Request.Builder()
-                .url(BASE_URL + endpoint + "/" + url(barcode))
+                .url(BASE_URL + endpoint + "/" + id)
+                .get()
+                .build();
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.isSuccessful()) {
+                return om.readValue(resp.body().string(), type);
+            }
+            debug("getById failed", resp);
+            throw new IOException("getById HTTP " + resp.code());
+        }
+    }
+
+    public boolean deleteById(String endpoint, long id) throws IOException {
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint + "/" + id)
                 .delete()
                 .build();
         try (Response resp = client.newCall(req).execute()) {
             if (resp.code() == 200 || resp.code() == 204) return true;
-            debug("deleteEmployee failed", resp);
+            debug("deleteById failed", resp);
             return false;
         }
     }
 
-    /* ============== yardımcılar ============== */
+    public <T> boolean putById(String endpoint, long id, T dto) throws IOException {
+        String json = om.writeValueAsString(dto);
+        Request req = new Request.Builder()
+                .url(BASE_URL + endpoint + "/" + id)
+                .put(RequestBody.create(json, MediaType.parse("application/json")))
+                .build();
+        try (Response resp = client.newCall(req).execute()) {
+            if (resp.isSuccessful()) return true;
+            debug("putById failed", resp);
+            return false;
+        }
+    }
 
     private static int responseCount(Response response) {
         int result = 1;
@@ -354,22 +363,14 @@ public class Client {
         Map<String,Object> c = parseJwtClaims();
         Set<String> out = new java.util.HashSet<>();
 
-        // Senin şema: tekil "role" (prefixsiz)
         Object single = c.get("role");
         if (single != null) {
-            String r = single.toString();
-            if (!r.isBlank()) {
-                out.add(r);              // "ADMIN"
-                out.add("ROLE_" + r);    // "ROLE_ADMIN"
+            String role = single.toString().toUpperCase(Locale.ROOT);
+            if (!role.isBlank()) {
+                out.add(role);                // "ADMIN"
+                //out.add("ROLE_" + role);    // "ROLE_ADMIN"
             }
         }
-
-        // İleride sunucuyu değiştirirsen diye fallback'ler:
-        Object rolesArr = c.get("roles");
-        if (rolesArr != null) out.addAll(toStringSet(rolesArr));
-
-        Object auth = c.get("authorities");
-        if (auth != null) out.addAll(toStringSet(auth));
 
         return out;
     }

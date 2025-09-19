@@ -49,6 +49,7 @@ public class GlobalExceptionHandler {
                 .body("Geçersiz Content-Type. Lütfen 'multipart/form-data' kullanın.");
     }
 
+    // Aynı veriye ait kayıt varsa : ÇAKIŞMA
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<String> handleConflict(ResponseStatusException ex) {
@@ -57,6 +58,7 @@ public class GlobalExceptionHandler {
                 .body("Zaten kayıtlı veri" + ex.getMessage());
     }
 
+    // Erişim izni yoksa
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(
             AccessDeniedException ex, HttpServletRequest req) {
@@ -71,6 +73,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
+    // Doğrulanmadıysa
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuth(
             AuthenticationException ex, HttpServletRequest req) {

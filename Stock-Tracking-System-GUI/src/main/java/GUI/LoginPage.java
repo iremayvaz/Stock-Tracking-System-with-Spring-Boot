@@ -4,12 +4,7 @@ import client.AppContext;
 import client.Client;
 import model.dto.DtoEmployee;
 import model.login.AuthRequest;
-
 import javax.swing.*;
-
-import java.util.concurrent.ExecutionException;
-
-import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import static javax.swing.JOptionPane.WARNING_MESSAGE;
 
 public class LoginPage extends javax.swing.JFrame {
@@ -178,9 +173,9 @@ public class LoginPage extends javax.swing.JFrame {
 
                     JOptionPane.showMessageDialog(LoginPage.this, message);
 
-                    if(apiClient.hasAnyRole("ROLE_VISITOR")) {
+                    if(apiClient.hasAnyRole("VISITOR")) {
                         new ProductListPage().setVisible(true);
-                    } else if(apiClient.hasAnyRole("ROLE_CONSULTANT")) {
+                    } else if(apiClient.hasAnyRole("CONSULTANT")) {
                         new EmployeeListPage().setVisible(true);
                     } else {
                         new MainPage().setVisible(true);

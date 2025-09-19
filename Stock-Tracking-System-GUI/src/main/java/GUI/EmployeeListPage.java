@@ -1,22 +1,33 @@
 package GUI;
 
-import javax.swing.JOptionPane;
+import client.AppContext;
+import client.Client;
+import model.dto.DtoEmployee;
+import model.dto.DtoEmployeeDetail;
+
+import javax.swing.*;
+
 import static javax.swing.JOptionPane.*;
 import javax.swing.table.DefaultTableModel;
+import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.List;
 
 public class EmployeeListPage extends javax.swing.JFrame {
 
     private static final String EMPLOYEES        = "/employees";
     private static final String FILTER_EMPLOYEES = EMPLOYEES + "/filter"; //  /employees/filter
+    private static final String DELETE_EMPLOYEE  = EMPLOYEES + "/delete"; //  /employees/delete
 
-    public static DefaultTableModel personalList;
+    private final Client apiClient = AppContext.getClient();
+
+    private static DefaultTableModel personalList;
+    private List<DtoEmployee> current = Collections.emptyList();
 
     public EmployeeListPage() {
         initComponents();
         personalList = (DefaultTableModel) tbl_personals.getModel();
-        /*if (DatabaseManager.checkAuthority()) {
-            DatabaseManager.showPersonals(personalList);
-        }*/
+        applyACL();
     }
 
     @SuppressWarnings("unchecked")
@@ -42,39 +53,38 @@ public class EmployeeListPage extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         menu_report = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
-        menuItem_export = new javax.swing.JMenuItem();
         menu_exit = new javax.swing.JMenu();
-        menuıtem_logout = new javax.swing.JMenuItem();
+        menuItem_logout = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
         menuItem_exit = new javax.swing.JMenuItem();
 
         menu_delete.setText("Delete");
-        //menu_delete.addActionListener(this::menu_deleteActionPerformed);
+        menu_delete.addActionListener(this::menu_deleteActionPerformed);
         popup_deleteUp.add(menu_delete);
         popup_deleteUp.add(seperator_deleteUp);
 
         menu_update.setText("Update");
-        //menu_update.addActionListener(this::menu_updateActionPerformed);
+        menu_update.addActionListener(this::menu_updateActionPerformed);
         popup_deleteUp.add(menu_update);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Personal");
+        setTitle("Employee");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) { formWindowClosing(evt); }
         });
 
         pnl_personalList.setBackground(new java.awt.Color(255, 255, 255));
         pnl_personalList.setBorder(javax.swing.BorderFactory.createTitledBorder(
-                null, "Personal List",
+                null, "Employee List",
                 javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
                 new java.awt.Font("Sitka Text", 1, 14)));
 
         tbl_personals.setModel(new javax.swing.table.DefaultTableModel(
                 new Object [][] {},
-                new String [] { "Name", "Surname", "Phone", "Email", "Password", "Position", "Gender" }
+                new String [] { "Name", "Surname", "Email", "Role" }
         ) {
-            final boolean[] canEdit = new boolean [] { false,false,false,false,false,false,false };
+            final boolean[] canEdit = new boolean [] { false,false,false,false };
             public boolean isCellEditable(int rowIndex, int columnIndex) { return canEdit [columnIndex]; }
         });
         tbl_personals.setComponentPopupMenu(popup_deleteUp);
@@ -84,11 +94,11 @@ public class EmployeeListPage extends javax.swing.JFrame {
         lbl_filter.setText("FILTER");
 
         comboBox_columns.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] { "Select", "Name", "Surname", "Phone", "Email", "Password", "Position", "Gender" }
+                new String[] { "Select", "Name", "Surname", "Email", "Role" }
         ));
 
         btn_search.setText("Search");
-        //btn_search.addActionListener(this::btn_searchActionPerformed);
+        btn_search.addActionListener(this::btn_searchActionPerformed);
 
         javax.swing.GroupLayout pnl_personalListLayout = new javax.swing.GroupLayout(pnl_personalList);
         pnl_personalList.setLayout(pnl_personalListLayout);
@@ -138,20 +148,16 @@ public class EmployeeListPage extends javax.swing.JFrame {
         menu_pages.add(jSeparator1);
 
         menu_report.setText("Report");
-        //menu_report.addActionListener(this::menu_reportActionPerformed);
+        menu_report.addActionListener(this::menu_reportActionPerformed);
         menu_pages.add(menu_report);
         menu_pages.add(jSeparator4);
-
-        menuItem_export.setText("Export");
-        //menuItem_export.addActionListener(this::menuItem_exportActionPerformed);
-        menu_pages.add(menuItem_export);
 
         menubar_pages.add(menu_pages);
 
         menu_exit.setText("EXIT");
-        menuıtem_logout.setText("Logout");
-        menuıtem_logout.addActionListener(this::menuıtem_logoutActionPerformed);
-        menu_exit.add(menuıtem_logout);
+        menuItem_logout.setText("Logout");
+        menuItem_logout.addActionListener(this::menuItem_logoutActionPerformed);
+        menu_exit.add(menuItem_logout);
         menu_exit.add(jSeparator3);
 
         menuItem_exit.setText("Exit");
@@ -177,22 +183,94 @@ public class EmployeeListPage extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    /*private void btn_searchActionPerformed(java.awt.event.ActionEvent evt) {
-        String searchedColumn = comboBox_columns.getItemAt(comboBox_columns.getSelectedIndex());
-        String query = txt_searched.getText().trim();
+    private void applyACL(){ // Yetki kontrolü
+        boolean havePermission = apiClient.hasPermission("EMPLOYEE_LIST")
+                              || apiClient.hasAnyRole( "BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY");
 
-        if (!"Select".equalsIgnoreCase(searchedColumn)) {
-            if (query.isEmpty()) {
-                DatabaseManager.showPersonals(personalList);
-                return;
-            }
-            if (!DatabaseManager.filterPersonal(personalList, query, searchedColumn)) {
-                JOptionPane.showMessageDialog(rootPane, "Failed to be filtered.");
-            } else {
-                JOptionPane.showMessageDialog(rootPane, "Filtered successfully");
-            }
+        btn_search.setEnabled(havePermission);
+        tbl_personals.setEnabled(havePermission);
+
+        boolean canUpdate = apiClient.hasPermission("EMPLOYEE_UPDATE")
+                || apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY");
+        boolean canDelete = apiClient.hasPermission("EMPLOYEE_DELETE")
+                || apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY");
+        menu_update.setEnabled(canUpdate);
+        menu_delete.setEnabled(canDelete);
+
+        if (!havePermission) {
+            JOptionPane.showMessageDialog(this, "Bu sayfayı görüntüleme izniniz yok.", "Yetki", WARNING_MESSAGE);
+            return;
         }
-    }*/
+
+        loadEmployeesAsync(""); // en başta tüm çalışanlar gelsin
+
+    }
+
+    private String backendColumnFromSelection() {
+        int idx = comboBox_columns.getSelectedIndex();
+        return switch (idx) {
+            case 1 -> "firstName";
+            case 2 -> "lastName";
+            case 3 -> "email";
+            case 4 -> "role";
+            default -> null; // "Select"
+        };
+    }
+
+    // Tabloyu doldurur
+    private void fillTable(List<DtoEmployee> list) {
+        current = (list != null) ? list : Collections.emptyList();
+        personalList.setRowCount(0);
+        for (DtoEmployee e : current) {
+            personalList.addRow(new Object[]{
+                    e.getFirstName(),
+                    e.getLastName(),
+                    e.getEmail(),
+                    e.getRoleName()
+            });
+        }
+    }
+
+    private void loadEmployeesAsync(String endpoint) {
+        new SwingWorker<List<DtoEmployee>, Void>() {
+            @Override
+            protected List<DtoEmployee> doInBackground() throws Exception {
+                return apiClient.filterEmployees(FILTER_EMPLOYEES + endpoint);
+            }
+            @Override
+            protected void done() {
+                try { fillTable(get()); } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            EmployeeListPage.this,
+                            "Filtreli liste yüklenemedi: " + ex.getMessage(),
+                            "Hata",
+                            javax.swing.JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        }.execute();
+    }
+
+
+    private void btn_searchActionPerformed(java.awt.event.ActionEvent evt) {
+        String column = backendColumnFromSelection();
+        String content = txt_searched.getText().trim();
+
+        if (column == null || content.isEmpty()) {
+            loadEmployeesAsync("");
+            return;
+        }
+
+        try {
+            String endpoint = "/?column=" + java.net.URLEncoder.encode(column, "UTF-8")
+                            + "&content=" + java.net.URLEncoder.encode(content, "UTF-8");
+
+            loadEmployeesAsync(endpoint); // veriler gelsin
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
     private void menu_addProductActionPerformed(java.awt.event.ActionEvent evt) {
         new MainPage().setVisible(true);
@@ -215,7 +293,7 @@ public class EmployeeListPage extends javax.swing.JFrame {
         }
     }
 
-    /*private void menu_reportActionPerformed(java.awt.event.ActionEvent evt) {
+    private void menu_reportActionPerformed(java.awt.event.ActionEvent evt) {
         new ProductListPage().setVisible(true);
         this.dispose();
     }
@@ -226,24 +304,32 @@ public class EmployeeListPage extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(rootPane, "There is no selected personal to delete.", "WARNING", WARNING_MESSAGE);
             return;
         }
-        int selectedRowIndex = tbl_personals.convertRowIndexToModel(viewRow);
-        String email = personalList.getValueAt(selectedRowIndex, 3).toString();
-        try {
-            if (tbl_personals.getSelectedRowCount() == 1) {
-                if (DatabaseManager.deletePerson(email)) {
-                    DatabaseManager.showPersonals(personalList);
-                    throw new Exception("Deleted successfully");
-                } else {
-                    throw new Exception("Failed to be deleted");
-                }
-            } else if (tbl_personals.getSelectedRowCount() == 0) {
-                throw new Exception("There is no selected personal to delete.");
-            } else {
-                throw new Exception("Select JUST ONE(1) personal to update!");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(rootPane, e.getMessage(), "WARNING", WARNING_MESSAGE);
+
+        if (!apiClient.hasPermission("EMPLOYEE_DELETE")
+                && !apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
+            JOptionPane.showMessageDialog(this, "Silme izniniz yok.", "Yetki", WARNING_MESSAGE);
+            return;
         }
+
+        int selectedRowIndex = tbl_personals.convertRowIndexToModel(viewRow);
+        long id = current.get(selectedRowIndex).getId();
+
+        int ok = JOptionPane.showConfirmDialog(this, "Bu çalışan silinsin mi?", "Onay", YES_NO_OPTION);
+        if (ok != YES_OPTION) return;
+
+        new javax.swing.SwingWorker<Boolean, Void>() {
+            @Override protected Boolean doInBackground() throws Exception {
+                return apiClient.deleteById(DELETE_EMPLOYEE, id); // DELETE /employees/{id}
+            }
+            @Override protected void done() {
+                try {
+                    if (get()) { JOptionPane.showMessageDialog(EmployeeListPage.this, "Silindi."); loadEmployeesAsync(""); }
+                    else       { JOptionPane.showMessageDialog(EmployeeListPage.this, "Silme başarısız.", "Hata", ERROR_MESSAGE); }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(EmployeeListPage.this, "Silme hatası: " + ex.getMessage(), "Hata", ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void menu_updateActionPerformed(java.awt.event.ActionEvent evt) {
@@ -252,27 +338,39 @@ public class EmployeeListPage extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(rootPane, "Select personal to update.", "WARNING", WARNING_MESSAGE);
             return;
         }
-        int selectedRowIndex = tbl_personals.convertRowIndexToModel(viewRow);
-        try {
-            if (tbl_personals.getSelectedRowCount() == 1) {
-                Person person = new Person();
-                person.setName(personalList.getValueAt(selectedRowIndex, 0).toString());
-                person.setSurname(personalList.getValueAt(selectedRowIndex, 1).toString());
-                person.setPhoneNum(personalList.getValueAt(selectedRowIndex, 2).toString());
-                person.setEmail(personalList.getValueAt(selectedRowIndex, 3).toString());
-                person.setPassword(personalList.getValueAt(selectedRowIndex, 4).toString());
-                person.setPosition(personalList.getValueAt(selectedRowIndex, 5).toString());
-                person.setGender(personalList.getValueAt(selectedRowIndex, 6).toString().charAt(0));
-                new Person_update(person).setVisible(true);
-            } else if (tbl_personals.getSelectedRowCount() == 0) {
-                throw new Exception("Select personal to update.");
-            } else {
-                throw new Exception("Select JUST ONE(1) personal to update!");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(rootPane, e.getMessage(), "WARNING", WARNING_MESSAGE);
+
+        if (!apiClient.hasPermission("EMPLOYEE_UPDATE")
+                && !apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
+            JOptionPane.showMessageDialog(this, "Güncelleme izniniz yok.", "Yetki", WARNING_MESSAGE);
+            return;
         }
-    }*/
+
+        int selectedRowIndex = tbl_personals.convertRowIndexToModel(viewRow);
+        if (selectedRowIndex < 0 || selectedRowIndex >= current.size()) {
+            JOptionPane.showMessageDialog(this, "Seçim geçersiz.", "Uyarı", WARNING_MESSAGE);
+            return;
+        }
+
+        long id = current.get(selectedRowIndex).getId(); // DTO’dan gerçek DB id
+
+        new javax.swing.SwingWorker<DtoEmployeeDetail, Void>() {
+            @Override
+            protected DtoEmployeeDetail doInBackground() throws Exception {
+                return apiClient.getById(EMPLOYEES, id, DtoEmployeeDetail.class);
+            }
+            @Override
+            protected void done() {
+                try {
+                    DtoEmployeeDetail dto = get();
+                    new EmployeeUpdatePage(id, dto).setVisible(true);
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(EmployeeListPage.this,
+                            "Detaylar alınamadı: " + ex.getMessage(), "Hata", ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
 
     private void menuItem_exitActionPerformed(java.awt.event.ActionEvent evt) {
         int option = JOptionPane.showConfirmDialog(rootPane,
@@ -280,7 +378,7 @@ public class EmployeeListPage extends javax.swing.JFrame {
         if (option == JOptionPane.OK_OPTION) { this.dispose(); }
     }
 
-    private void menuıtem_logoutActionPerformed(java.awt.event.ActionEvent evt) {
+    private void menuItem_logoutActionPerformed(java.awt.event.ActionEvent evt) {
         new LoginPage().setVisible(true);
         this.dispose();
     }
@@ -312,7 +410,6 @@ public class EmployeeListPage extends javax.swing.JFrame {
     private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.JLabel lbl_filter;
     private javax.swing.JMenuItem menuItem_exit;
-    private javax.swing.JMenuItem menuItem_export;
     private javax.swing.JMenuItem menu_addProduct;
     private javax.swing.JMenuItem menu_delete;
     private javax.swing.JMenu menu_exit;
@@ -322,7 +419,7 @@ public class EmployeeListPage extends javax.swing.JFrame {
     private javax.swing.JMenuItem menu_update;
     private javax.swing.JMenuItem menu_updateProduct;
     private javax.swing.JMenuBar menubar_pages;
-    private javax.swing.JMenuItem menuıtem_logout;
+    private javax.swing.JMenuItem menuItem_logout;
     private javax.swing.JPanel pnl_personalList;
     private javax.swing.JPopupMenu popup_deleteUp;
     private javax.swing.JPopupMenu.Separator seperator_deleteUp;

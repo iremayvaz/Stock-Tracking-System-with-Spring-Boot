@@ -69,9 +69,10 @@ public class SeedConfig {
 
                 RoleName.EMPLOYEE, Set.of(
                         Permission.PRODUCT_UPDATE,
-                        Permission.EMPLOYEE_LIST,
+                        Permission.PRODUCT_ADD,
                         Permission.PRODUCT_LIST,
                         Permission.ME
+                            //Permission.EMPLOYEE_LIST,
                         // kendi bilgilerini de güncellesin??
                 ), // ÇALIŞAN
 
@@ -88,7 +89,6 @@ public class SeedConfig {
                 ), // SEKRETER
 
                 RoleName.VISITOR, Set.of(
-                        Permission.EMPLOYEE_LIST,
                         Permission.PRODUCT_LIST,
                         Permission.ME
                 ) // ZİYARETÇİ

@@ -16,13 +16,13 @@ public class RegisterPage extends javax.swing.JFrame {
     private static final String AUTH_REGISTER = "/register";
 
     // from JTextField
-    public String getFirstName() { return txt_name.getText().trim(); }
+    public String getFirstName() { return txt_name.getText(); }
 
-    public String getLastName() { return txt_surname.getText().trim(); }
+    public String getLastName() { return txt_surname.getText(); }
 
-    public String getPhoneNum() { return txt_phoneNum.getText().trim(); }
+    public String getPhoneNum() { return txt_phoneNum.getText(); }
 
-    public String getEmail() { return txt_email.getText().trim(); }
+    public String getEmail() { return txt_email.getText(); }
 
     public String getTckNo() { return txt_tckno.getText(); }
 
@@ -57,6 +57,7 @@ public class RegisterPage extends javax.swing.JFrame {
         lbl_surname = new javax.swing.JLabel();
         lbl_email = new javax.swing.JLabel();
         lbl_phoneNum = new javax.swing.JLabel();
+        txt_tckno = new javax.swing.JTextField();
         txt_name = new javax.swing.JTextField();
         txt_surname = new javax.swing.JTextField();
         txt_email = new javax.swing.JTextField();

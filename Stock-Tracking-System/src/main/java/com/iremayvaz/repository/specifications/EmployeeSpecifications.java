@@ -4,8 +4,6 @@ import com.iremayvaz.model.entity.Employee;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.text.Normalizer;
-import java.util.Locale;
 
 @UtilityClass
 // Sınıfı final yapar
@@ -21,13 +19,32 @@ public class EmployeeSpecifications {
                 return criteriaBuilder.conjunction(); // TRUE döner yani her şeyi geçir demek
             }
 
-            try{
-                return criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get(column)),
-                        "%" + content.toLowerCase() + "%"
-                );
-            } catch (IllegalArgumentException e) {
-                return criteriaBuilder.disjunction(); // FALSE döner yani boş kayıt döner
+            String pattern = "%" + content.toLowerCase() + "%";
+
+            try {
+                switch (column) {
+                    case "firstName" -> {
+                        return criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), pattern);
+                    }
+                    case "lastName" -> {
+                        return criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), pattern);
+                    }
+                    case "email" -> {
+                        var u = root.join("user"); // @OneToOne user
+                        return criteriaBuilder.like(criteriaBuilder.lower(u.get("email")), pattern);
+                    }
+                    case "role" -> {
+                        var u = root.join("user");
+                        var r = u.join("role");
+                        return criteriaBuilder.like(criteriaBuilder.lower(r.get("name").as(String.class)), pattern);
+                    }
+                    default -> {
+                        // Bilinmeyen kolon → boş sonuç
+                        return criteriaBuilder.disjunction();
+                    }
+                }
+            } catch (IllegalArgumentException ex) {
+                return criteriaBuilder.disjunction();
             }
         };
     }

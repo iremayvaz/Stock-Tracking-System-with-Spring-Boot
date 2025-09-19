@@ -1,86 +1,44 @@
 package GUI;
 
+import client.AppContext;
+import client.Client;
+import model.dto.DtoProductDetail;
+import model.dto.DtoProductIU;
+
+import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+
+import static javax.swing.JOptionPane.WARNING_MESSAGE;
 
 public class ProductUpdatePage extends javax.swing.JFrame {
 
     private static final String PRODUCTS       = "/products";
     private static final String UPDATE_PRODUCT = PRODUCTS + "/update";
 
-    //check data (Cancel'da döngüden çık)
-    public void checkData(JTextField field, String regex, String input, String fieldName) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-        boolean isFound = false;
+    private final Client apiClient = AppContext.getClient();
+    private final Long id;
 
-        if (!matcher.matches()) {
-            while (!matcher.matches()) {
-                String newData = JOptionPane.showInputDialog(rootPane, fieldName + " invalid");
-                if (newData == null) { // kullanıcı iptal etti
-                    isFound = false;
-                    break;
-                } else {
-                    matcher = pattern.matcher(newData);
-                }
-            }
-            if (matcher.matches()) {
-                field.setText(matcher.group());
-                isFound = true;
-            }
-        } else {
-            isFound = true;
-        }
+    // from JTextField
+    public String getTxtCategory() { return text_category.getText(); }
 
-        if (!isFound) {
-            field.setText("");
-        }
-    }
-
-    //getCategory from JTextField
-    public String getTxtCategory() {
-        checkData(text_category, "^[A-Z][a-z]+$", text_category.getText(), "category");
-        return text_category.getText();
-    }
-
-    //getBarcode from JTextField (barkod inputu değiştirilemez ise ctor'da setEditable(false) var)
     public String getTxtBarcode() {
         return text_barcode.getText();
     }
 
-    //getProductName from JTextField
-    public String getTxtProductName() {
-        checkData(text_productName, "^[A-Z][a-z]+$", text_productName.getText(), "product name");
-        return text_productName.getText();
-    }
+    public String getTxtProductName() { return text_productName.getText(); }
 
-    //getColor from JTextField
-    public String getTxtColor() {
-        checkData(text_color, "^[A-Z][a-z]+$", text_color.getText(), "color");
-        return text_color.getText();
-    }
+    public String getTxtColor() { return text_color.getText(); }
 
-    //getSize from JTextField (boş olmasın diye + kullandım)
-    public String getTxtSize() {
-        checkData(text_size, "^[A-Za-z0-9]+$", text_size.getText(), "size");
-        return text_size.getText();
-    }
+    public String getTxtSize() { return text_size.getText(); }
 
-    //getPrice from JTextField
-    public String getTxtPrice() {
-        checkData(text_price, "^[0-9]+(\\.[0-9]{1,2})?$", text_price.getText(), "price");
-        return text_price.getText();
-    }
+    public String getTxtPrice() { return text_price.getText(); }
 
-    //getNumber from JTextField
-    public String getTxtNumber() {
-        checkData(text_number, "^[0-9]+$", text_number.getText(), "number");
-        return text_number.getText();
-    }
+    public String getTxtNumber() { return text_number.getText(); }
 
-    //getExplanation from JTextField (Cancel'da çık)
+    // Cancel'da çık
     public String getTxtExplanation() {
         String cur = text_explanation.getText();
         if (!cur.equals("")) {
@@ -102,25 +60,28 @@ public class ProductUpdatePage extends javax.swing.JFrame {
     }
 
     public ProductUpdatePage() {
+        this.id = null;
         initComponents();
     }
 
-    /*public GUI.ProductUpdatePage(Product product) {
+    public ProductUpdatePage(Long id, DtoProductDetail product) {
+        this.id = id;
         initComponents();
-        text_category.setText(product.getCategory());
-        text_barcode.setText(product.getBarcode());
-        text_productName.setText(product.getProductName());
-        text_color.setText(product.getColor());
-        text_size.setText(product.getSize());
-        text_price.setText(product.getPrice());
-        text_number.setText(product.getNumber());
-        text_explanation.setText(product.getExplanation());
-        text_barcode.setEditable(false); // barkod anahtar
-    }*/
+        if(applyACL("PRODUCT_ADD",
+                "BOSS", "ACCOUNTANT", "AUTHORIZED", "EMPLOYEE", "SECRETARY")) {
+            text_category.setText(product.getCategory());
+            text_barcode.setText(product.getBarcode());
+            text_productName.setText(product.getProductName());
+            text_color.setText(product.getColor());
+            text_size.setText(product.getSize());
+            text_price.setText(product.getPrice().toString());
+            text_number.setText(product.getStockQuantity().toString());
+            text_explanation.setText(product.getExplanation());
+        }
+    }
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
-
         pnl_update = new javax.swing.JPanel();
         label_category = new javax.swing.JLabel();
         label_barcode = new javax.swing.JLabel();
@@ -157,7 +118,7 @@ public class ProductUpdatePage extends javax.swing.JFrame {
         label_explanation.setText("Explanation");
 
         button_update.setText("UPDATE");
-        //button_update.addActionListener(this::button_updateActionPerformed);
+        button_update.addActionListener(this::button_updateActionPerformed);
 
         lbl_warning.setFont(new java.awt.Font("Sitka Text", 3, 12)); // NOI18N
         lbl_warning.setForeground(new java.awt.Color(255, 0, 0));
@@ -255,22 +216,50 @@ public class ProductUpdatePage extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    /*private void button_updateActionPerformed(java.awt.event.ActionEvent evt) {
-        boolean ok = DatabaseManager.updateProduct(
-                getTxtBarcode(),
-                new Product(getTxtCategory(), getTxtBarcode(),
-                        getTxtProductName(), getTxtColor(),
-                        getTxtSize(), getTxtPrice(),
-                        getTxtNumber(), getTxtExplanation()));
+    private boolean applyACL(String permission, String... roles){ // Yetki kontrolü
+        boolean havePermission = apiClient.hasPermission(permission)
+                || apiClient.hasAnyRole(roles);
 
-        if (ok) {
-            JOptionPane.showMessageDialog(rootPane, "Updated successfully", "", INFORMATION_MESSAGE);
-            this.dispose();
-            DatabaseManager.showProducts(Product_add.productList);
-        } else {
-            JOptionPane.showMessageDialog(rootPane, "Failed to update.", "FAIL", WARNING_MESSAGE);
+        if (!havePermission) {
+            JOptionPane.showMessageDialog(this, "Bu sayfayı görüntüleme izniniz yok.", "Yetki", WARNING_MESSAGE);
         }
-    }*/
+
+        return havePermission;
+    }
+
+    private void button_updateActionPerformed(java.awt.event.ActionEvent evt) {
+        if(applyACL("PRODUCT_ADD",
+                "BOSS", "ACCOUNTANT", "AUTHORIZED", "EMPLOYEE", "SECRETARY")) {
+            DtoProductIU dtoProductIU = new DtoProductIU();
+            dtoProductIU.setBarcode(text_barcode.getText().trim());
+            dtoProductIU.setCategory(text_category.getText().trim());
+            dtoProductIU.setProductName(text_productName.getText().trim());
+            dtoProductIU.setColor(text_color.getText().trim());
+            dtoProductIU.setSize(text_size.getText().trim());
+            dtoProductIU.setPrice(new BigDecimal(text_price.getText().trim()));
+            dtoProductIU.setStockQuantity(Integer.parseInt(text_number.getText().trim()));
+            dtoProductIU.setExplanation(text_explanation.getText().trim());
+
+            new javax.swing.SwingWorker<Boolean, Void>() {
+                protected Boolean doInBackground() throws Exception {
+                    return apiClient.putById(UPDATE_PRODUCT, id, dtoProductIU); // http://localhost:8080/products/update/{id}
+                }
+
+                protected void done() {
+                    try {
+                        if (get()) {
+                            JOptionPane.showMessageDialog(ProductUpdatePage.this, "Güncellendi");
+                            dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(ProductUpdatePage.this, "Güncellenemedi", "Hata", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(ProductUpdatePage.this, "Hata: " + e.getMessage(), "Hata", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }.execute();
+        }
+    }
 
     public static void main(String args[]) {
         try {

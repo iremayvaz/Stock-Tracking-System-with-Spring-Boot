@@ -1,6 +1,7 @@
 package com.iremayvaz.services.impl;
 
 import com.iremayvaz.model.dto.DtoProduct;
+import com.iremayvaz.model.dto.DtoProductDetail;
 import com.iremayvaz.model.dto.DtoProductIU;
 import com.iremayvaz.model.entity.Product;
 import com.iremayvaz.repository.ProductRepository;
@@ -49,15 +50,17 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Girilen barkoda ait ürün kaydı bulunamadı!"));
 
-        if(product.getProductName().equals(updateProductRequest.getProductName())){ product.setProductName(updateProductRequest.getProductName());}
-        if(product.getCategory().equals(updateProductRequest.getCategory())){ product.setCategory(updateProductRequest.getCategory());}
-        if(product.getColor().equals(updateProductRequest.getColor())){ product.setColor(updateProductRequest.getColor());}
-        if(product.getPrice().equals(updateProductRequest.getPrice())){ product.setPrice(updateProductRequest.getPrice());}
-        if(product.getStockQuantity().equals(updateProductRequest.getStockQuantity())){ product.setStockQuantity(updateProductRequest.getStockQuantity());}
-        if(product.getSize().equals(updateProductRequest.getSize())){ product.setSize(updateProductRequest.getSize());}
+        if(!product.getBarcode().equals(updateProductRequest.getBarcode())){ product.setBarcode(updateProductRequest.getBarcode());}
+        if(!product.getProductName().equals(updateProductRequest.getProductName())){ product.setProductName(updateProductRequest.getProductName());}
+        if(!product.getCategory().equals(updateProductRequest.getCategory())){ product.setCategory(updateProductRequest.getCategory());}
+        if(!product.getPrice().equals(updateProductRequest.getPrice())){ product.setPrice(updateProductRequest.getPrice());}
+        if(!product.getStockQuantity().equals(updateProductRequest.getStockQuantity())){ product.setStockQuantity(updateProductRequest.getStockQuantity());}
+
+        product.setSize(updateProductRequest.getSize());
+        product.setColor(updateProductRequest.getColor());
+        product.setExplanation(updateProductRequest.getExplanation());
 
         Product savedProduct = productRepository.save(product);
-
         BeanUtils.copyProperties(savedProduct, dto);
         return dto;
     }
@@ -86,5 +89,19 @@ public class ProductServiceImpl implements ProductService {
             dtoProducts.add(dto);
         }
         return dtoProducts;
+    }
+
+    @Transactional(readOnly=true)
+    @Override
+    public DtoProductDetail getProductInfo(Long id) { // update'i otomatik doldurmak için yazdım. değiştirilecek kısım silinip değiştirilebilir.
+        DtoProductDetail dto = new DtoProductDetail();
+        Optional<Product> optional = productRepository.findById(id);
+
+        if (optional.isPresent()){
+            BeanUtils.copyProperties(optional.get(), dto);
+            return dto;
+        } else {
+            throw new IllegalArgumentException("Id ile kayıtlı kullanıcı yok!");
+        }
     }
 }

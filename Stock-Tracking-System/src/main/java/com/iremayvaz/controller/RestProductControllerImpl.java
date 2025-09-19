@@ -1,6 +1,7 @@
 package com.iremayvaz.controller;
 
 import com.iremayvaz.model.dto.DtoProduct;
+import com.iremayvaz.model.dto.DtoProductDetail;
 import com.iremayvaz.model.dto.DtoProductIU;
 import com.iremayvaz.services.impl.ProductServiceImpl;
 import jakarta.validation.Valid;
@@ -49,5 +50,11 @@ public class RestProductControllerImpl {
     public List<DtoProduct> filterProduct(@RequestParam(required = false) String column,
                                           @RequestParam(required = false) String content) {
         return productService.filterProduct(column, content);
+    }
+
+    @PreAuthorize( "hasAuthority('PRODUCT_LIST') and hasAnyRole('EMPLOYEE', 'ACCOUNTANT', 'SECRETARY', 'BOSS', 'CONSULTANT', 'VISITOR', 'AUTHORIZED')" )
+    @GetMapping("/{id}")
+    public DtoProductDetail getProductInfo(@PathVariable(value = "id") @NotNull Long id) {
+        return productService.getProductInfo(id);
     }
 }

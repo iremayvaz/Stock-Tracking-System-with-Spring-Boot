@@ -1,115 +1,77 @@
 package GUI;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
+import client.AppContext;
+import client.Client;
+import model.dto.DtoEmployeeDetail;
+import model.dto.DtoUserIU;
+import model.entity.enums.Gender;
+import model.entity.enums.RoleName;
+
+import javax.swing.*;
 
 public class EmployeeUpdatePage extends javax.swing.JFrame {
+
+    private final Client apiClient = AppContext.getClient();
+    private final Long id;
 
     private static final String EMPLOYEES        = "/employees";
     private static final String UPDATE_EMPLOYEES = EMPLOYEES + "/update"; //   /employees/update
 
-    //check data (iptalde sonsuz döngü fix)
-    public void checkData(JTextField field, String regex, String input, String fieldName) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-        boolean isFound = false;
+    public String getTckNo() { return txt_tckno.getText(); }
 
-        if (!matcher.matches()) {
-            while (!matcher.matches()) {
-                String newData = JOptionPane.showInputDialog(
-                        rootPane, fieldName + " invalid");
-                if (newData == null) { // kullanıcı iptal etti
-                    isFound = false;
-                    break;
-                } else {
-                    matcher = pattern.matcher(newData);
-                }
-            }
-            if (matcher.matches()) {
-                field.setText(matcher.group());
-                isFound = true;
-            }
-        } else {
-            isFound = true;
-        }
+    public String getFirstname() { return txt_name.getText(); }
 
-        if (!isFound) {
-            field.setText("");
-        }
-    }
+    public String getLastname() { return txt_surname.getText(); }
 
-    // get person name
-    public String getName() {
-        checkData(txt_name, "^[A-Z][a-z]+$", txt_name.getText(), "name");
-        return txt_name.getText();
-    }
+    public String getPhoneNum() { return txt_phoneNum.getText(); }
 
-    // get person surname
-    public String getSurname() {
-        checkData(txt_surname, "^[A-Z][a-z]+$", txt_surname.getText(), "surname");
-        return txt_surname.getText();
-    }
-
-    // get person phone number
-    public String getPhoneNum() {
-        checkData(txt_phoneNum, "^[1-9][0-9]{9}$", txt_phoneNum.getText(), "phone number");
-        return txt_phoneNum.getText();
-    }
-
-    // get person email (değiştirilemez)
     public String getEmail() {
         return txt_email.getText();
     }
 
-    // get person password
-    public String getPassword() {
-        checkData(txt_password, "^(.{8,})$", txt_password.getText(), "password");
-        return txt_password.getText();
-    }
+    public String getPassword() { return txt_password.getText();}
 
-    // get person position
-    public String getPosition() {
+    public RoleName getPosition() {
         return comboBox_position.getItemAt(comboBox_position.getSelectedIndex());
     }
 
-    // get person gender (seçili değilse '\0')
-    public char getGender() {
-        if (rBtn_female.isSelected()) return 'F';
-        if (rBtn_male.isSelected())   return 'M';
-        return '\0';
+    public Gender getGender() {
+        if (rBtn_female.isSelected()) return Gender.FEMALE;
+        if (rBtn_male.isSelected())   return Gender.MALE;
+        return null;
     }
 
     public EmployeeUpdatePage() {
+        this.id = null;
         initComponents();
+        comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(RoleName.values()));
+        rBtn_male.setSelected(true);
+        btn_update.setEnabled(false);
     }
 
-    /*public GUI.EmployeeUpdatePage(Person person) {
+
+    public EmployeeUpdatePage(Long id, DtoEmployeeDetail dto) {
+        this.id = id;
         initComponents();
-        txt_name.setText(person.getName());
-        txt_surname.setText(person.getSurname());
-        txt_phoneNum.setText(person.getPhoneNum());
-        txt_email.setText(person.getEmail());
-        txt_password.setText(person.getPassword());
-        comboBox_position.setSelectedItem(person.getPosition());
-
-        if (person.getGender() == 'M') rBtn_male.setSelected(true);
-        else if (person.getGender() == 'F') rBtn_female.setSelected(true);
-
-        // değiştirilemesin:
-        txt_email.setEditable(false);
-        rBtn_female.setEnabled(false);
-        rBtn_male.setEnabled(false);
-    }*/
+        txt_tckno.setText(dto.getTck_no());
+        txt_name.setText(dto.getFirstName());
+        txt_surname.setText(dto.getLastName());
+        txt_phoneNum.setText(dto.getPhoneNum());
+        txt_email.setText(dto.getEmail());
+        comboBox_position.setSelectedItem(dto.getPosition()); // RoleName enum combobox
+        if (dto.getGender() == Gender.MALE) rBtn_male.setSelected(true);
+        else if(dto.getGender() == Gender.FEMALE) rBtn_female.setSelected(true);
+    }
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
         btnGroup_gender = new javax.swing.ButtonGroup();
         pnl_personUpdate = new javax.swing.JPanel();
+        lbl_tckno = new javax.swing.JLabel();
         lbl_name = new javax.swing.JLabel();
         lbl_surname = new javax.swing.JLabel();
         lbl_phoneNum = new javax.swing.JLabel();
+        txt_tckno = new javax.swing.JTextField();
         txt_name = new javax.swing.JTextField();
         txt_surname = new javax.swing.JTextField();
         txt_phoneNum = new javax.swing.JTextField();
@@ -133,6 +95,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
                 new java.awt.Font("Sitka Text", 1, 14)));
 
+        lbl_tckno.setText("TCK number");
         lbl_name.setText("Name");
         lbl_surname.setText("Surname");
         lbl_phoneNum.setText("Phone Number");
@@ -141,9 +104,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
         lbl_position.setText("Position");
         lbl_gender.setText("Gender");
 
-        comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] { "Choose...", "Employee", "Accountant", "Secretary",
-                        "Boss", "Consultant", "Visitor", "Authorized" }));
+        comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(RoleName.values()));
 
         btnGroup_gender.add(rBtn_male);
         rBtn_male.setText("Male");
@@ -151,7 +112,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
         rBtn_female.setText("Female");
 
         btn_update.setText("Update");
-        //btn_update.addActionListener(this::btn_updateActionPerformed);
+        btn_update.addActionListener(this::btn_updateActionPerformed);
 
         lbl_warning.setFont(new java.awt.Font("Segoe UI", 3, 14));
         lbl_warning.setForeground(new java.awt.Color(255, 0, 0));
@@ -169,6 +130,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
                                                 .addComponent(btn_update))
                                         .addGroup(pnl_personUpdateLayout.createSequentialGroup()
                                                 .addGroup(pnl_personUpdateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(lbl_tckno)
                                                         .addComponent(lbl_name)
                                                         .addComponent(lbl_phoneNum)
                                                         .addComponent(lbl_surname)
@@ -187,7 +149,8 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
                                                         .addComponent(txt_surname)
                                                         .addComponent(txt_phoneNum)
                                                         .addComponent(comboBox_position, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                        .addComponent(txt_name)))
+                                                        .addComponent(txt_name)
+                                                        .addComponent(txt_tckno)))
                                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnl_personUpdateLayout.createSequentialGroup()
                                                 .addGap(38, 38, 38)
                                                 .addComponent(lbl_warning, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)))
@@ -199,6 +162,10 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
                                 .addContainerGap()
                                 .addComponent(lbl_warning)
                                 .addGap(9, 9, 9)
+                                .addGroup(pnl_personUpdateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lbl_tckno)
+                                        .addComponent(txt_tckno, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
                                 .addGroup(pnl_personUpdateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lbl_name)
                                         .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -249,30 +216,45 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    /*private void btn_updateActionPerformed(java.awt.event.ActionEvent evt) {
-        boolean ok = DatabaseManager.updatePerson(
-                getEmail(),
-                new Person(getName(), getSurname(),
-                        getPhoneNum(), getEmail(),
-                        getPassword(), getPosition(),
-                        getGender()));
-
-        if (ok) {
-            JOptionPane.showMessageDialog(rootPane,
-                    "Updated successfully",
-                    "Person Updating",
-                    PLAIN_MESSAGE);
-
-            // Demo: listede ne var göster
-            DatabaseManager.showPersonals(Person_personalList.personalList);
-            this.dispose();
-        } else {
-            JOptionPane.showMessageDialog(rootPane,
-                    "Failed to update.",
-                    "FAIL",
-                    WARNING_MESSAGE);
+    private void btn_updateActionPerformed(java.awt.event.ActionEvent evt) {
+        // ACL kontrol
+        if (!apiClient.hasPermission("EMPLOYEE_UPDATE")
+                && !apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
+            JOptionPane.showMessageDialog(this, "İzniniz yok.", "Yetki", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-    }*/
+
+        DtoUserIU dtoUserIU = new DtoUserIU();
+        dtoUserIU.setTck_no(txt_tckno.getText().trim());
+        dtoUserIU.setFirstName(txt_name.getText().trim());
+        dtoUserIU.setLastName(txt_surname.getText().trim());
+        dtoUserIU.setPhoneNum(txt_phoneNum.getText().trim());
+        dtoUserIU.setEmail(txt_email.getText().trim());
+        dtoUserIU.setPosition((RoleName) comboBox_position.getSelectedItem());
+        dtoUserIU.setGender(rBtn_male.isSelected() ? Gender.MALE : Gender.FEMALE);
+
+        String newPass = new String(getPassword()).trim();
+        dtoUserIU.setPassword(newPass.isEmpty() ? null : newPass); // boşsa null gönder
+
+        new javax.swing.SwingWorker<Boolean, Void>() {
+            protected Boolean doInBackground() throws Exception {
+                return apiClient.putById(UPDATE_EMPLOYEES, id, dtoUserIU); // http://localhost:8080/employees/update/{id}
+            }
+
+            protected void done() {
+                try {
+                    if (get()) {
+                        JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Güncellendi");
+                        dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Güncellenemedi", "Hata", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Hata: " + e.getMessage(), "Hata", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
 
     public static void main(String args[]) {
         try {
@@ -290,7 +272,8 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
     // Variables
     private javax.swing.ButtonGroup btnGroup_gender;
     private javax.swing.JButton btn_update;
-    private javax.swing.JComboBox<String> comboBox_position;
+    private javax.swing.JComboBox<RoleName> comboBox_position;
+    private javax.swing.JLabel lbl_tckno;
     private javax.swing.JLabel lbl_email;
     private javax.swing.JLabel lbl_gender;
     private javax.swing.JLabel lbl_name;
@@ -302,6 +285,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
     private javax.swing.JPanel pnl_personUpdate;
     private javax.swing.JRadioButton rBtn_female;
     private javax.swing.JRadioButton rBtn_male;
+    private javax.swing.JTextField txt_tckno;
     private javax.swing.JTextField txt_email;
     private javax.swing.JTextField txt_name;
     private javax.swing.JTextField txt_password;

@@ -1,5 +1,15 @@
 package GUI;
 
+import client.AppContext;
+import client.Client;
+import model.dto.DtoEmployeeDetail;
+import model.dto.DtoProduct;
+import model.dto.DtoProductDetail;
+import model.dto.DtoProductIU;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.*;
 import javax.swing.*;
 import static javax.swing.JOptionPane.*;
@@ -8,19 +18,24 @@ import javax.swing.table.DefaultTableModel;
 public class MainPage extends javax.swing.JFrame {
 
     private static final String PRODUCTS       = "/products";
-    private static final String ADD_PRODUCT    = PRODUCTS + "/add";
-    private static final String DELETE_PRODUCT = PRODUCTS + "/delete";
+    private static final String ADD_PRODUCT    = PRODUCTS + "/add";    //  /products/add
+    private static final String FILTER_PRODUCT = PRODUCTS + "/filter"; //  /products/filter
+    private static final String DELETE_PRODUCT = PRODUCTS + "/delete"; //  /products/delete
 
-    public static DefaultTableModel productList;
 
-    //getters (trim ile)
-    public String getTxtCategory()   { return txt_category.getText().trim(); }
-    public String getTxtBarcode()    { return txt_barcode.getText().trim(); }
-    public String getTxtProductName(){ return txt_productName.getText().trim(); }
-    public String getTxtColor()      { return txt_color.getText().trim(); }
-    public String getTxtSize()       { return txt_size.getText().trim(); }
-    public String getTxtPrice()      { return txt_price.getText().trim(); }
-    public String getTxtNumber()     { return txt_number.getText().trim(); }
+    private final Client apiClient = AppContext.getClient();
+
+    private static DefaultTableModel productList;
+    private List<DtoProduct> current = Collections.emptyList();
+
+    //getters
+    public String getTxtCategory()   { return txt_category.getText(); }
+    public String getTxtBarcode()    { return txt_barcode.getText(); }
+    public String getTxtProductName(){ return txt_productName.getText(); }
+    public String getTxtColor()      { return txt_color.getText(); }
+    public String getTxtSize()       { return txt_size.getText(); }
+    public String getTxtPrice()      { return txt_price.getText(); }
+    public String getTxtNumber()     { return txt_number.getText(); }
 
     //setters
     public void setTxtCategory(String v){ txt_category.setText(v); }
@@ -31,45 +46,13 @@ public class MainPage extends javax.swing.JFrame {
     public void setTxtPrice(String v){ txt_price.setText(v); }
     public void setTxtNumber(String v){ txt_number.setText(v); }
 
-    // regex kontrolleri (Cancel'da çık)
-    public boolean checkData(String regex, String input, String fieldName) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-        if (!matcher.matches()) {
-            while (!matcher.matches()) {
-                String newData = JOptionPane.showInputDialog(rootPane, fieldName + " invalid");
-                if (newData == null) return false; // iptal
-                matcher = pattern.matcher(newData);
-            }
-            return true;
-        }
-        return true;
-    }
-
-    public boolean checkData(JTextField field, String regex, String input, String fieldName) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
-        if (!matcher.matches()) {
-            while (!matcher.matches()) {
-                String newData = JOptionPane.showInputDialog(rootPane, fieldName + " invalid");
-                if (newData == null) return false; // iptal
-                matcher = pattern.matcher(newData);
-            }
-            field.setText(matcher.group());
-            return true;
-        }
-        return true;
-    }
-
-    public void data(JTextField field, String regex, String input, String fieldName) {
-        if (!checkData(field, regex, input, fieldName)) {
-            field.setText("");
-        }
-    }
-
     public MainPage() {
         initComponents();
         productList = (DefaultTableModel) tbl_products.getModel();
+        if(applyACL("PRODUCT_LIST",
+                "BOSS", "ACCOUNTANT", "AUTHORIZED", "EMPLOYEE", "SECRETARY")){
+            loadProductsAsync();
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -106,7 +89,6 @@ public class MainPage extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         menuItem_personals = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
-        menuItem_export = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         menuItem_update = new javax.swing.JMenuItem();
         exit_menu = new javax.swing.JMenu();
@@ -115,12 +97,12 @@ public class MainPage extends javax.swing.JFrame {
         menuItem_exit = new javax.swing.JMenuItem();
 
         mbtn_update.setText("Update");
-        //mbtn_update.addActionListener(this::btn_updateActionPerformed);
+        mbtn_update.addActionListener(this::btn_updateActionPerformed);
         popup_upDelete.add(mbtn_update);
         popup_upDelete.add(seperator_upDelete);
 
         mbtn_delete.setText("Delete");
-        //mbtn_delete.addActionListener(this::btn_deleteActionPerformed);
+        mbtn_delete.addActionListener(this::btn_deleteActionPerformed);
         popup_upDelete.add(mbtn_delete);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -128,7 +110,7 @@ public class MainPage extends javax.swing.JFrame {
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) { formWindowClosing(evt); }
-            //public void windowOpened(java.awt.event.WindowEvent evt) { formWindowOpened(evt); }
+            public void windowOpened(java.awt.event.WindowEvent evt) { formWindowOpened(evt); }
         });
 
         pnl_addProduct.setBackground(new java.awt.Color(255, 255, 255));
@@ -147,7 +129,7 @@ public class MainPage extends javax.swing.JFrame {
         tbl_products.setModel(new javax.swing.table.DefaultTableModel(
                 new Object [][] {},
                 new String [] {
-                        "Category", "Barcode", "Product Name", "Color", "Size", "Price", "Number", "Explanation"
+                        "Barcode", "Product Name", "Color", "Size", "Price", "Number", "Explanation"
                 }
         ) {
             boolean[] canEdit = new boolean [] { false,false,false,false,false,false,false,false };
@@ -161,13 +143,13 @@ public class MainPage extends javax.swing.JFrame {
         isExplanationAdded.setText("Add an explanation");
 
         btn_add.setText("ADD");
-        //btn_add.addActionListener(this::btn_addActionPerformed);
+        btn_add.addActionListener(this::btn_addActionPerformed);
 
         btn_update.setText("UPDATE");
-        //btn_update.addActionListener(this::btn_updateActionPerformed);
+        btn_update.addActionListener(this::btn_updateActionPerformed);
 
         btn_delete.setText("DELETE");
-        //btn_delete.addActionListener(this::btn_deleteActionPerformed);
+        btn_delete.addActionListener(this::btn_deleteActionPerformed);
 
         javax.swing.GroupLayout pnl_addProductLayout = new javax.swing.GroupLayout(pnl_addProduct);
         pnl_addProduct.setLayout(pnl_addProductLayout);
@@ -253,22 +235,17 @@ public class MainPage extends javax.swing.JFrame {
         menu_options.setText("Options");
 
         menuItem_report.setText("See report ");
-        //menuItem_report.addActionListener(this::menuItem_reportActionPerformed);
+        menuItem_report.addActionListener(this::menuItem_reportActionPerformed);
         menu_options.add(menuItem_report);
         menu_options.add(jSeparator1);
 
         menuItem_personals.setText("See personals");
-        //menuItem_personals.addActionListener(this::menuItem_personalsActionPerformed);
+        menuItem_personals.addActionListener(this::menuItem_personalsActionPerformed);
         menu_options.add(menuItem_personals);
         menu_options.add(jSeparator2);
 
-        menuItem_export.setText("Export");
-        //menuItem_export.addActionListener(this::menuItem_exportActionPerformed);
-        menu_options.add(menuItem_export);
-        menu_options.add(jSeparator4);
-
         menuItem_update.setText("Make an update");
-        //menuItem_update.addActionListener(this::menuItem_updateActionPerformed);
+        menuItem_update.addActionListener(this::menuItem_updateActionPerformed);
         menu_options.add(menuItem_update);
 
         menuBar_options.add(menu_options);
@@ -308,60 +285,110 @@ public class MainPage extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }
-/*
+
+    private boolean applyACL(String permission, String... roles){ // Yetki kontrolü
+        boolean havePermission = apiClient.hasPermission(permission)
+                || apiClient.hasAnyRole(roles);
+
+        if (!havePermission) {
+            JOptionPane.showMessageDialog(this, "Bu sayfayı görüntüleme izniniz yok.", "Yetki", WARNING_MESSAGE);
+        }
+
+        return havePermission;
+    }
+
+    // Tabloyu doldurur
+    private void fillTable(List<DtoProduct> list) {
+        current = (list != null) ? list : Collections.emptyList();
+        productList.setRowCount(0);
+        for (DtoProduct dtoProduct : current) {
+            productList.addRow(new Object[]{
+                    dtoProduct.getBarcode(),
+                    dtoProduct.getProductName(),
+                    dtoProduct.getColor(),
+                    dtoProduct.getSize(),
+                    dtoProduct.getPrice(),
+                    dtoProduct.getStockQuantity()
+            });
+        }
+    }
+
+    private void loadProductsAsync() {
+        new SwingWorker<List<DtoProduct>, Void>() {
+            @Override
+            protected List<DtoProduct> doInBackground() throws Exception {
+                return apiClient.listProducts(FILTER_PRODUCT);
+            }
+            @Override
+            protected void done() {
+                try { fillTable(get()); } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            MainPage.this,
+                            "Filtreli liste yüklenemedi: " + ex.getMessage(),
+                            "Hata",
+                            javax.swing.JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        }.execute();
+    }
+
     private void btn_addActionPerformed(java.awt.event.ActionEvent evt) {
         // validations
-        data(txt_category,    "^[A-Z][a-z]+$",          getTxtCategory(),    "category");
-        data(txt_barcode,     "^[0-9]{8,13}$",          getTxtBarcode(),     "barcode");
-        data(txt_productName, "^[A-Z][a-z]+$",          getTxtProductName(), "product name");
-        data(txt_color,       "^[A-Z][a-z]+$",          getTxtColor(),       "color");
-        data(txt_size,        "^[A-Za-z0-9]+$",         getTxtSize(),        "size");
-        data(txt_price,       "^[0-9]+(\\.[0-9]{1,2})?$", getTxtPrice(),     "price");
-        data(txt_number,      "^[0-9]+$",               getTxtNumber(),      "number");
-
         String inputExplanation = "";
         if (isExplanationAdded.isSelected()) {
             String ex = JOptionPane.showInputDialog(rootPane,
                     "WRITE AN Explanation ABOUT THE PRODUCT",
                     "EXPLANATION",
                     INFORMATION_MESSAGE);
-            if (ex != null && checkData("^[A-Z][a-z\\s]{1,50}$", ex, "explanation")) {
+            if (ex != null) {
                 inputExplanation = ex;
             }
         }
+        DtoProductIU newProduct;
 
-        Product newProduct = new Product(
-                getTxtCategory(), getTxtBarcode(), getTxtProductName(), getTxtColor(),
-                getTxtSize(), getTxtPrice(), getTxtNumber(), inputExplanation
-        );
-
-        if (getTxtCategory().isEmpty() || getTxtBarcode().isEmpty() ||
-                getTxtProductName().isEmpty() || getTxtColor().isEmpty() ||
-                getTxtSize().isEmpty() || getTxtPrice().isEmpty() ||
+        if (getTxtCategory().isEmpty() ||
+                getTxtBarcode().isEmpty() ||
+                getTxtProductName().isEmpty() ||
+                getTxtPrice().isEmpty() ||
                 getTxtNumber().isEmpty())
         {
             JOptionPane.showMessageDialog(rootPane, "Empty field", "Error", ERROR_MESSAGE);
             return;
+        } else{
+            newProduct = new DtoProductIU(
+                    getTxtBarcode(), getTxtCategory(), getTxtProductName(), getTxtColor(),
+                    getTxtSize(), getTxtPrice(), getTxtNumber(), inputExplanation
+            );
         }
 
-        if (DatabaseManager.addProduct(newProduct)) {
-            JOptionPane.showMessageDialog(rootPane, "The product is added successfully.", "", PLAIN_MESSAGE);
-            DatabaseManager.showProducts(productList);
-            // reset
-            setTxtCategory(""); setTxtBarcode(""); setTxtProductName(""); setTxtColor("");
-            setTxtSize(""); setTxtPrice(""); setTxtNumber(""); isExplanationAdded.setSelected(false);
-        } else {
-            JOptionPane.showMessageDialog(rootPane, "The product canNOT be added.", "", WARNING_MESSAGE);
-        }
-    }*/
+        new javax.swing.SwingWorker<Boolean, Void>() {
+            protected Boolean doInBackground() throws Exception {
+                return apiClient.addProduct(ADD_PRODUCT, newProduct); // http://localhost:8080/products/add
+            }
 
-    /*private void menuItem_reportActionPerformed(java.awt.event.ActionEvent evt) {
+            protected void done() {
+                try {
+                    if (get()) {
+                        JOptionPane.showMessageDialog(MainPage.this, "Ürün eklendi");
+                        loadProductsAsync();
+                    } else {
+                        JOptionPane.showMessageDialog(MainPage.this, "Ürün eklenemedi", "Hata", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(MainPage.this, "Hata: " + e.getMessage(), "Hata", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private void menuItem_reportActionPerformed(java.awt.event.ActionEvent evt) {
         ProductListPage mainToList = new ProductListPage();
         mainToList.setVisible(true);
         this.dispose();
-    }*/
+    }
 
-    /*private void menuItem_updateActionPerformed(java.awt.event.ActionEvent evt) {
+    private void menuItem_updateActionPerformed(java.awt.event.ActionEvent evt) {
         if (tbl_products.getSelectedRow() == -1) {
             JOptionPane.showMessageDialog(rootPane,
                     "You should select a product to make an update",
@@ -369,16 +396,25 @@ public class MainPage extends javax.swing.JFrame {
                     INFORMATION_MESSAGE);
         } else {
             int selectedRowIndex = tbl_products.convertRowIndexToModel(tbl_products.getSelectedRow());
-            Product product = new Product();
-            product.setCategory(productList.getValueAt(selectedRowIndex, 0).toString());
-            product.setBarcode(productList.getValueAt(selectedRowIndex, 1).toString());
-            product.setProductName(productList.getValueAt(selectedRowIndex, 2).toString());
-            product.setColor(productList.getValueAt(selectedRowIndex, 3).toString());
-            product.setSize(productList.getValueAt(selectedRowIndex, 4).toString());
-            product.setPrice(productList.getValueAt(selectedRowIndex, 5).toString());
-            product.setNumber(productList.getValueAt(selectedRowIndex, 6).toString());
-            product.setExplanation(productList.getValueAt(selectedRowIndex, 7).toString());
-            new Product_update(product).setVisible(true);
+            long id = current.get(selectedRowIndex).getId(); // DTO’dan gerçek DB id
+
+            new javax.swing.SwingWorker<DtoProductDetail, Void>() {
+                @Override
+                protected DtoProductDetail doInBackground() throws Exception {
+                    return apiClient.getById(PRODUCTS, id, DtoProductDetail.class);
+                }
+                @Override
+                protected void done() {
+                    try {
+                        DtoProductDetail dto = get();
+                        new ProductUpdatePage(id, dto).setVisible(true);
+                        loadProductsAsync();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(MainPage.this,
+                                "Detaylar alınamadı: " + ex.getMessage(), "Hata", ERROR_MESSAGE);
+                    }
+                }
+            }.execute();
         }
     }
 
@@ -387,16 +423,25 @@ public class MainPage extends javax.swing.JFrame {
             int count = tbl_products.getSelectedRowCount();
             if (count == 1) {
                 int idx = tbl_products.convertRowIndexToModel(tbl_products.getSelectedRow());
-                Product product = new Product();
-                product.setCategory(productList.getValueAt(idx, 0).toString());
-                product.setBarcode(productList.getValueAt(idx, 1).toString());
-                product.setProductName(productList.getValueAt(idx, 2).toString());
-                product.setColor(productList.getValueAt(idx, 3).toString());
-                product.setSize(productList.getValueAt(idx, 4).toString());
-                product.setPrice(productList.getValueAt(idx, 5).toString());
-                product.setNumber(productList.getValueAt(idx, 6).toString());
-                product.setExplanation(productList.getValueAt(idx, 7).toString());
-                new Product_update(product).setVisible(true);
+                long id = current.get(idx).getId(); // DTO’dan gerçek DB id
+
+                new javax.swing.SwingWorker<DtoProductDetail, Void>() {
+                    @Override
+                    protected DtoProductDetail doInBackground() throws Exception {
+                        return apiClient.getById(PRODUCTS, id, DtoProductDetail.class);
+                    }
+                    @Override
+                    protected void done() {
+                        try {
+                            DtoProductDetail dto = get();
+                            new ProductUpdatePage(id, dto).setVisible(true);
+                            loadProductsAsync();
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(MainPage.this,
+                                    "Detaylar alınamadı: " + ex.getMessage(), "Hata", ERROR_MESSAGE);
+                        }
+                    }
+                }.execute();
             } else if (count == 0) {
                 throw new Exception("Select product to update.");
             } else {
@@ -412,17 +457,36 @@ public class MainPage extends javax.swing.JFrame {
             int count = tbl_products.getSelectedRowCount();
             if (count == 1) {
                 int idx = tbl_products.convertRowIndexToModel(tbl_products.getSelectedRow());
-                String barcode = productList.getValueAt(idx, 1).toString();
-                if (DatabaseManager.deleteProduct(barcode)) {
-                    DatabaseManager.showProducts(productList);
-                    JOptionPane.showMessageDialog(rootPane, "Deleted successfully", "", INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(rootPane, "Failed to be deleted", "WARNING", WARNING_MESSAGE);
-                }
+                long id = current.get(idx).getId(); // DTO’dan gerçek DB id
+
+                new javax.swing.SwingWorker<Boolean, Void>() {
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        return apiClient.deleteById(DELETE_PRODUCT, id);
+                    }
+                    @Override
+                    protected void done() {
+                        try {
+                            Boolean deleted = get();
+                            if(deleted){
+                                JOptionPane.showMessageDialog(MainPage.this,
+                                        "Ürün başarıyla silindi ", "Hata", INFORMATION_MESSAGE);
+                                loadProductsAsync();
+                            } else {
+                                JOptionPane.showMessageDialog(MainPage.this,
+                                        "Ürün silinemedi ", "Hata", ERROR_MESSAGE);
+                            }
+
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(MainPage.this,
+                                    "Detaylar alınamadı: " + ex.getMessage(), "Hata", ERROR_MESSAGE);
+                        }
+                    }
+                }.execute();
             } else if (count == 0) {
                 throw new Exception("There is no selected product to delete.");
             } else {
-                throw new Exception("Select JUST ONE(1) product to update!");
+                throw new Exception("Select JUST ONE(1) product to delete!");
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(rootPane, e.getMessage(), "WARNING", WARNING_MESSAGE);
@@ -430,8 +494,8 @@ public class MainPage extends javax.swing.JFrame {
     }
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {
-        DatabaseManager.showProducts(productList);
-    }*/
+        loadProductsAsync();
+    }
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
         int option = JOptionPane.showConfirmDialog(rootPane,
@@ -441,18 +505,19 @@ public class MainPage extends javax.swing.JFrame {
         if (option == JOptionPane.OK_OPTION) this.dispose();
     }
 
-    /*private void menuItem_personalsActionPerformed(java.awt.event.ActionEvent evt) {
-        if (DatabaseManager.checkAuthority()) {
-            Person_personalList addingToPersonalList = new Person_personalList();
+    private void menuItem_personalsActionPerformed(java.awt.event.ActionEvent evt) {
+        if (!apiClient.hasPermission("EMPLOYEE_UPDATE")
+                && !apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
+            EmployeeListPage addingToPersonalList = new EmployeeListPage();
             addingToPersonalList.setVisible(true);
             this.dispose();
         } else {
             JOptionPane.showMessageDialog(rootPane,
-                    "You do not have enough authority for see personal list",
+                    "You do not have enough authority to see personal list",
                     "",
                     INFORMATION_MESSAGE);
         }
-    }*/
+    }
 
     private void menuItem_logoutActionPerformed(java.awt.event.ActionEvent evt) {
         LoginPage addToLogin = new LoginPage();
@@ -489,7 +554,6 @@ public class MainPage extends javax.swing.JFrame {
     private javax.swing.JMenuItem mbtn_update;
     private javax.swing.JMenuBar menuBar_options;
     private javax.swing.JMenuItem menuItem_exit;
-    private javax.swing.JMenuItem menuItem_export;
     private javax.swing.JMenuItem menuItem_logout;
     private javax.swing.JMenuItem menuItem_personals;
     private javax.swing.JMenuItem menuItem_report;
