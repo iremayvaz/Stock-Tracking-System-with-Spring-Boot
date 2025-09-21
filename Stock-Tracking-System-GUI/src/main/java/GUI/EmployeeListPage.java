@@ -3,7 +3,7 @@ package GUI;
 import client.AppContext;
 import client.Client;
 import model.dto.DtoEmployee;
-import model.dto.DtoEmployeeDetail;
+import model.dto.DtoUserUpdate;
 
 import javax.swing.*;
 
@@ -27,7 +27,9 @@ public class EmployeeListPage extends javax.swing.JFrame {
     public EmployeeListPage() {
         initComponents();
         personalList = (DefaultTableModel) tbl_personals.getModel();
-        applyACL();
+        if(applyACL("EMPLOYEE_LIST", "BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")){
+            loadEmployeesAsync("");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -183,27 +185,15 @@ public class EmployeeListPage extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    private void applyACL(){ // Yetki kontrolü
-        boolean havePermission = apiClient.hasPermission("EMPLOYEE_LIST")
-                              || apiClient.hasAnyRole( "BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY");
-
-        btn_search.setEnabled(havePermission);
-        tbl_personals.setEnabled(havePermission);
-
-        boolean canUpdate = apiClient.hasPermission("EMPLOYEE_UPDATE")
-                || apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY");
-        boolean canDelete = apiClient.hasPermission("EMPLOYEE_DELETE")
-                || apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY");
-        menu_update.setEnabled(canUpdate);
-        menu_delete.setEnabled(canDelete);
+    private boolean applyACL(String permission, String... roles){ // Yetki kontrolü
+        boolean havePermission = apiClient.hasPermission(permission)
+                || apiClient.hasAnyRole(roles);
 
         if (!havePermission) {
             JOptionPane.showMessageDialog(this, "Bu sayfayı görüntüleme izniniz yok.", "Yetki", WARNING_MESSAGE);
-            return;
         }
 
-        loadEmployeesAsync(""); // en başta tüm çalışanlar gelsin
-
+        return havePermission;
     }
 
     private String backendColumnFromSelection() {
@@ -262,7 +252,7 @@ public class EmployeeListPage extends javax.swing.JFrame {
         }
 
         try {
-            String endpoint = "/?column=" + java.net.URLEncoder.encode(column, "UTF-8")
+            String endpoint = "?column=" + java.net.URLEncoder.encode(column, "UTF-8")
                             + "&content=" + java.net.URLEncoder.encode(content, "UTF-8");
 
             loadEmployeesAsync(endpoint); // veriler gelsin
@@ -294,8 +284,13 @@ public class EmployeeListPage extends javax.swing.JFrame {
     }
 
     private void menu_reportActionPerformed(java.awt.event.ActionEvent evt) {
-        new ProductListPage().setVisible(true);
-        this.dispose();
+        if (apiClient.hasPermission("PRODUCT_LIST")
+                && apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
+            new ProductListPage().setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Silme izniniz yok.", "Yetki", WARNING_MESSAGE);
+        }
     }
 
     private void menu_deleteActionPerformed(java.awt.event.ActionEvent evt) {
@@ -353,15 +348,15 @@ public class EmployeeListPage extends javax.swing.JFrame {
 
         long id = current.get(selectedRowIndex).getId(); // DTO’dan gerçek DB id
 
-        new javax.swing.SwingWorker<DtoEmployeeDetail, Void>() {
+        new javax.swing.SwingWorker<DtoUserUpdate, Void>() {
             @Override
-            protected DtoEmployeeDetail doInBackground() throws Exception {
-                return apiClient.getById(EMPLOYEES, id, DtoEmployeeDetail.class);
+            protected DtoUserUpdate doInBackground() throws Exception {
+                return apiClient.getById(EMPLOYEES, id, DtoUserUpdate.class);
             }
             @Override
             protected void done() {
                 try {
-                    DtoEmployeeDetail dto = get();
+                    DtoUserUpdate dto = get();
                     new EmployeeUpdatePage(id, dto).setVisible(true);
 
                 } catch (Exception ex) {
@@ -384,8 +379,13 @@ public class EmployeeListPage extends javax.swing.JFrame {
     }
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
-        new MainPage().setVisible(true);
-        this.dispose();
+        if(applyACL("PRODUCT_LIST",
+                "BOSS", "ACCOUNTANT", "AUTHORIZED", "EMPLOYEE", "SECRETARY")) {
+            new MainPage().setVisible(true);
+            this.dispose();
+        } else {
+
+        }
     }
 
     public static void main(String args[]) {

@@ -3,15 +3,24 @@ package model.dto;
 import model.entity.enums.Gender;
 import model.entity.enums.RoleName;
 
-public class DtoEmployeeDetail {
+public class DtoUserUpdate {
     private Long id;
     private String tck_no;
     private String firstName;
     private String lastName;
     private String phoneNum;
     private String email;
+    private String password;
     private RoleName position;
     private Gender gender;
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;

@@ -92,8 +92,8 @@ public class Client {
         }
     }
 
-    public DtoUser register(String endpoint, DtoUserIU dtoUserIU) throws JsonProcessingException {
-        String json = om.writeValueAsString(dtoUserIU);
+    public DtoUser register(String endpoint, DtoUserInsert dtoUserInsert) throws JsonProcessingException {
+        String json = om.writeValueAsString(dtoUserInsert);
 
         Request newReq = new Request.Builder()
                 .url(BASE_URL + endpoint) // http://localhost:8080/register
@@ -178,7 +178,7 @@ public class Client {
         }
     }
 
-    public boolean addProduct(String endpoint, DtoProductIU dtoProductIU) throws IOException {
+    public boolean addProduct(String endpoint, DtoProductInsert dtoProductIU) throws IOException {
         String json = om.writeValueAsString(dtoProductIU);
         Request req = new Request.Builder()
                 .url(BASE_URL + endpoint)

@@ -2,8 +2,7 @@ package model.dto;
 
 import java.math.BigDecimal;
 
-public class DtoProductDetail {
-    private Long id;
+public class DtoProductInsert {
     private String barcode;
     private String category;
     private String productName;
@@ -12,6 +11,26 @@ public class DtoProductDetail {
     private BigDecimal price;
     private Integer stockQuantity;
     private String explanation;
+
+    public DtoProductInsert(){}
+
+    public DtoProductInsert(String barcode,
+                            String category,
+                            String productName,
+                            String color,
+                            String size,
+                            String price,
+                            String stockQuantity,
+                            String explanation){
+        this.barcode = barcode;
+        this.category = category;
+        this.productName = productName;
+        this.color = color;
+        this.size = size;
+        this.price = new BigDecimal(price);
+        this.stockQuantity = Integer.parseInt(stockQuantity);
+        this.explanation = explanation;
+    }
 
     public String getBarcode() {
         return barcode;

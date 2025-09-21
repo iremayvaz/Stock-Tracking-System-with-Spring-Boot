@@ -3,7 +3,7 @@ package model.dto;
 import model.entity.enums.Gender;
 import model.entity.enums.RoleName;
 
-public class DtoUserIU {
+public class DtoUserInsert {
     private String tck_no;
     private String firstName;
     private String lastName;

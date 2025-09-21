@@ -2,8 +2,8 @@ package GUI;
 
 import client.AppContext;
 import client.Client;
-import model.dto.DtoEmployeeDetail;
-import model.dto.DtoUserIU;
+import model.dto.DtoUserUpdate;
+import model.dto.DtoUserInsert;
 import model.entity.enums.Gender;
 import model.entity.enums.RoleName;
 
@@ -50,7 +50,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
     }
 
 
-    public EmployeeUpdatePage(Long id, DtoEmployeeDetail dto) {
+    public EmployeeUpdatePage(Long id, DtoUserUpdate dto) {
         this.id = id;
         initComponents();
         txt_tckno.setText(dto.getTck_no());
@@ -224,21 +224,21 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
             return;
         }
 
-        DtoUserIU dtoUserIU = new DtoUserIU();
-        dtoUserIU.setTck_no(txt_tckno.getText().trim());
-        dtoUserIU.setFirstName(txt_name.getText().trim());
-        dtoUserIU.setLastName(txt_surname.getText().trim());
-        dtoUserIU.setPhoneNum(txt_phoneNum.getText().trim());
-        dtoUserIU.setEmail(txt_email.getText().trim());
-        dtoUserIU.setPosition((RoleName) comboBox_position.getSelectedItem());
-        dtoUserIU.setGender(rBtn_male.isSelected() ? Gender.MALE : Gender.FEMALE);
+        DtoUserInsert dtoUserInsert = new DtoUserInsert();
+        dtoUserInsert.setTck_no(txt_tckno.getText().trim());
+        dtoUserInsert.setFirstName(txt_name.getText().trim());
+        dtoUserInsert.setLastName(txt_surname.getText().trim());
+        dtoUserInsert.setPhoneNum(txt_phoneNum.getText().trim());
+        dtoUserInsert.setEmail(txt_email.getText().trim());
+        dtoUserInsert.setPosition((RoleName) comboBox_position.getSelectedItem());
+        dtoUserInsert.setGender(rBtn_male.isSelected() ? Gender.MALE : Gender.FEMALE);
 
         String newPass = new String(getPassword()).trim();
-        dtoUserIU.setPassword(newPass.isEmpty() ? null : newPass); // boşsa null gönder
+        dtoUserInsert.setPassword(newPass.isEmpty() ? null : newPass); // boşsa null gönder
 
         new javax.swing.SwingWorker<Boolean, Void>() {
             protected Boolean doInBackground() throws Exception {
-                return apiClient.putById(UPDATE_EMPLOYEES, id, dtoUserIU); // http://localhost:8080/employees/update/{id}
+                return apiClient.putById(UPDATE_EMPLOYEES, id, dtoUserInsert); // http://localhost:8080/employees/update/{id}
             }
 
             protected void done() {

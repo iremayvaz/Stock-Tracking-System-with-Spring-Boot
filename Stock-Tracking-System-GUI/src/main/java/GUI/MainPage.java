@@ -2,15 +2,12 @@ package GUI;
 
 import client.AppContext;
 import client.Client;
-import model.dto.DtoEmployeeDetail;
 import model.dto.DtoProduct;
-import model.dto.DtoProductDetail;
-import model.dto.DtoProductIU;
+import model.dto.DtoProductUpdate;
+import model.dto.DtoProductInsert;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.*;
 import javax.swing.*;
 import static javax.swing.JOptionPane.*;
 import javax.swing.table.DefaultTableModel;
@@ -345,7 +342,7 @@ public class MainPage extends javax.swing.JFrame {
                 inputExplanation = ex;
             }
         }
-        DtoProductIU newProduct;
+        DtoProductInsert newProduct;
 
         if (getTxtCategory().isEmpty() ||
                 getTxtBarcode().isEmpty() ||
@@ -356,7 +353,7 @@ public class MainPage extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(rootPane, "Empty field", "Error", ERROR_MESSAGE);
             return;
         } else{
-            newProduct = new DtoProductIU(
+            newProduct = new DtoProductInsert(
                     getTxtBarcode(), getTxtCategory(), getTxtProductName(), getTxtColor(),
                     getTxtSize(), getTxtPrice(), getTxtNumber(), inputExplanation
             );
@@ -398,15 +395,15 @@ public class MainPage extends javax.swing.JFrame {
             int selectedRowIndex = tbl_products.convertRowIndexToModel(tbl_products.getSelectedRow());
             long id = current.get(selectedRowIndex).getId(); // DTO’dan gerçek DB id
 
-            new javax.swing.SwingWorker<DtoProductDetail, Void>() {
+            new javax.swing.SwingWorker<DtoProductUpdate, Void>() {
                 @Override
-                protected DtoProductDetail doInBackground() throws Exception {
-                    return apiClient.getById(PRODUCTS, id, DtoProductDetail.class);
+                protected DtoProductUpdate doInBackground() throws Exception {
+                    return apiClient.getById(PRODUCTS, id, DtoProductUpdate.class);
                 }
                 @Override
                 protected void done() {
                     try {
-                        DtoProductDetail dto = get();
+                        DtoProductUpdate dto = get();
                         new ProductUpdatePage(id, dto).setVisible(true);
                         loadProductsAsync();
                     } catch (Exception ex) {
@@ -425,15 +422,15 @@ public class MainPage extends javax.swing.JFrame {
                 int idx = tbl_products.convertRowIndexToModel(tbl_products.getSelectedRow());
                 long id = current.get(idx).getId(); // DTO’dan gerçek DB id
 
-                new javax.swing.SwingWorker<DtoProductDetail, Void>() {
+                new javax.swing.SwingWorker<DtoProductUpdate, Void>() {
                     @Override
-                    protected DtoProductDetail doInBackground() throws Exception {
-                        return apiClient.getById(PRODUCTS, id, DtoProductDetail.class);
+                    protected DtoProductUpdate doInBackground() throws Exception {
+                        return apiClient.getById(PRODUCTS, id, DtoProductUpdate.class);
                     }
                     @Override
                     protected void done() {
                         try {
-                            DtoProductDetail dto = get();
+                            DtoProductUpdate dto = get();
                             new ProductUpdatePage(id, dto).setVisible(true);
                             loadProductsAsync();
                         } catch (Exception ex) {
@@ -506,8 +503,8 @@ public class MainPage extends javax.swing.JFrame {
     }
 
     private void menuItem_personalsActionPerformed(java.awt.event.ActionEvent evt) {
-        if (!apiClient.hasPermission("EMPLOYEE_UPDATE")
-                && !apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
+        if (apiClient.hasAllPermissions("EMPLOYEE_DELETE", "EMPLOYEE_UPDATE", "EMPLOYEE_LIST")
+                && apiClient.hasAnyRole("BOSS", "AUTHORIZED", "CONSULTANT", "SECRETARY")) {
             EmployeeListPage addingToPersonalList = new EmployeeListPage();
             addingToPersonalList.setVisible(true);
             this.dispose();

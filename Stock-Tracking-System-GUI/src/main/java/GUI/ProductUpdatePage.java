@@ -2,14 +2,13 @@ package GUI;
 
 import client.AppContext;
 import client.Client;
-import model.dto.DtoProductDetail;
-import model.dto.DtoProductIU;
+import model.dto.DtoProductUpdate;
+import model.dto.DtoProductInsert;
 
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 
 import static javax.swing.JOptionPane.WARNING_MESSAGE;
 
@@ -64,7 +63,7 @@ public class ProductUpdatePage extends javax.swing.JFrame {
         initComponents();
     }
 
-    public ProductUpdatePage(Long id, DtoProductDetail product) {
+    public ProductUpdatePage(Long id, DtoProductUpdate product) {
         this.id = id;
         initComponents();
         if(applyACL("PRODUCT_ADD",
@@ -230,7 +229,7 @@ public class ProductUpdatePage extends javax.swing.JFrame {
     private void button_updateActionPerformed(java.awt.event.ActionEvent evt) {
         if(applyACL("PRODUCT_ADD",
                 "BOSS", "ACCOUNTANT", "AUTHORIZED", "EMPLOYEE", "SECRETARY")) {
-            DtoProductIU dtoProductIU = new DtoProductIU();
+            DtoProductInsert dtoProductIU = new DtoProductInsert();
             dtoProductIU.setBarcode(text_barcode.getText().trim());
             dtoProductIU.setCategory(text_category.getText().trim());
             dtoProductIU.setProductName(text_productName.getText().trim());

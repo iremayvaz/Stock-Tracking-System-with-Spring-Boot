@@ -3,7 +3,7 @@ package GUI;
 import client.AppContext;
 import client.Client;
 import model.dto.DtoUser;
-import model.dto.DtoUserIU;
+import model.dto.DtoUserInsert;
 import model.entity.enums.Gender;
 import model.entity.enums.RoleName;
 
@@ -212,7 +212,7 @@ public class RegisterPage extends javax.swing.JFrame {
     }
 
     private void btn_registerActionPerformed(java.awt.event.ActionEvent evt) {
-        DtoUserIU dto = new DtoUserIU();
+        DtoUserInsert dto = new DtoUserInsert();
 
         dto.setFirstName(getFirstName());
         dto.setLastName(getLastName());
