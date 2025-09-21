@@ -358,7 +358,7 @@ public class EmployeeListPage extends javax.swing.JFrame {
                 try {
                     DtoUserUpdate dto = get();
                     new EmployeeUpdatePage(id, dto).setVisible(true);
-
+                    loadEmployeesAsync("");
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(EmployeeListPage.this,
                             "Detaylar alınamadı: " + ex.getMessage(), "Hata", ERROR_MESSAGE);

@@ -3,7 +3,6 @@ package GUI;
 import client.AppContext;
 import client.Client;
 import model.dto.DtoUserUpdate;
-import model.dto.DtoUserInsert;
 import model.entity.enums.Gender;
 import model.entity.enums.RoleName;
 
@@ -45,7 +44,6 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
         this.id = null;
         initComponents();
         comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(RoleName.values()));
-        rBtn_male.setSelected(true);
         btn_update.setEnabled(false);
     }
 
@@ -58,6 +56,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
         txt_surname.setText(dto.getLastName());
         txt_phoneNum.setText(dto.getPhoneNum());
         txt_email.setText(dto.getEmail());
+        comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(RoleName.values()));
         comboBox_position.setSelectedItem(dto.getPosition()); // RoleName enum combobox
         if (dto.getGender() == Gender.MALE) rBtn_male.setSelected(true);
         else if(dto.getGender() == Gender.FEMALE) rBtn_female.setSelected(true);
@@ -224,21 +223,21 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
             return;
         }
 
-        DtoUserInsert dtoUserInsert = new DtoUserInsert();
-        dtoUserInsert.setTck_no(txt_tckno.getText().trim());
-        dtoUserInsert.setFirstName(txt_name.getText().trim());
-        dtoUserInsert.setLastName(txt_surname.getText().trim());
-        dtoUserInsert.setPhoneNum(txt_phoneNum.getText().trim());
-        dtoUserInsert.setEmail(txt_email.getText().trim());
-        dtoUserInsert.setPosition((RoleName) comboBox_position.getSelectedItem());
-        dtoUserInsert.setGender(rBtn_male.isSelected() ? Gender.MALE : Gender.FEMALE);
+        DtoUserUpdate dtoUserUpdate = new DtoUserUpdate();
+        dtoUserUpdate.setTck_no(txt_tckno.getText().trim());
+        dtoUserUpdate.setFirstName(txt_name.getText().trim());
+        dtoUserUpdate.setLastName(txt_surname.getText().trim());
+        dtoUserUpdate.setPhoneNum(txt_phoneNum.getText().trim());
+        dtoUserUpdate.setEmail(txt_email.getText().trim());
+        dtoUserUpdate.setPosition((RoleName) comboBox_position.getSelectedItem());
+        dtoUserUpdate.setGender(rBtn_male.isSelected() ? Gender.MALE : Gender.FEMALE);
 
         String newPass = new String(getPassword()).trim();
-        dtoUserInsert.setPassword(newPass.isEmpty() ? null : newPass); // boşsa null gönder
+        dtoUserUpdate.setPassword(newPass.isEmpty() ? null : newPass); // boşsa null gönder
 
         new javax.swing.SwingWorker<Boolean, Void>() {
             protected Boolean doInBackground() throws Exception {
-                return apiClient.putById(UPDATE_EMPLOYEES, id, dtoUserInsert); // http://localhost:8080/employees/update/{id}
+                return apiClient.putById(UPDATE_EMPLOYEES, id, dtoUserUpdate); // http://localhost:8080/employees/update/{id}
             }
 
             protected void done() {
