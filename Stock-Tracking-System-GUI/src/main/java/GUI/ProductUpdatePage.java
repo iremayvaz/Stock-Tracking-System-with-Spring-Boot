@@ -19,6 +19,7 @@ public class ProductUpdatePage extends javax.swing.JFrame {
 
     private final Client apiClient = AppContext.getClient();
     private final Long id;
+    private final UpdateListener listener;
 
     // from JTextField
     public String getTxtCategory() { return text_category.getText(); }
@@ -60,11 +61,13 @@ public class ProductUpdatePage extends javax.swing.JFrame {
 
     public ProductUpdatePage() {
         this.id = null;
+        this.listener = null;
         initComponents();
     }
 
-    public ProductUpdatePage(Long id, DtoProductUpdate product) {
+    public ProductUpdatePage(Long id, DtoProductUpdate product, UpdateListener listener) {
         this.id = id;
+        this.listener = listener;
         initComponents();
         if(applyACL("PRODUCT_ADD",
                 "BOSS", "ACCOUNTANT", "AUTHORIZED", "EMPLOYEE", "SECRETARY")) {
@@ -249,6 +252,7 @@ public class ProductUpdatePage extends javax.swing.JFrame {
                         if (get()) {
                             JOptionPane.showMessageDialog(ProductUpdatePage.this, "Güncellendi");
                             dispose();
+                            listener.onUpdated();
                         } else {
                             JOptionPane.showMessageDialog(ProductUpdatePage.this, "Güncellenemedi", "Hata", JOptionPane.ERROR_MESSAGE);
                         }

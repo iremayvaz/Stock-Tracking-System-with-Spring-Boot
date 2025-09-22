@@ -15,7 +15,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
 
     private static final String EMPLOYEES        = "/employees";
     private static final String UPDATE_EMPLOYEES = EMPLOYEES + "/update"; //   /employees/update
-    private final EmployeeUpdateListener listener;
+    private final UpdateListener listener;
 
     public String getTckNo() { return txt_tckno.getText(); }
 
@@ -50,7 +50,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
     }
 
 
-    public EmployeeUpdatePage(Long id, DtoUserUpdate dto, EmployeeUpdateListener listener) {
+    public EmployeeUpdatePage(Long id, DtoUserUpdate dto, UpdateListener listener) {
         this.id = id;
         this.listener = listener;
         initComponents();
@@ -248,7 +248,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
                     if (get()) {
                         JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Güncellendi");
                         dispose();
-                        listener.onEmployeeUpdated();
+                        listener.onUpdated();
                     } else {
                         JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Güncellenemedi", "Hata", JOptionPane.ERROR_MESSAGE);
                     }

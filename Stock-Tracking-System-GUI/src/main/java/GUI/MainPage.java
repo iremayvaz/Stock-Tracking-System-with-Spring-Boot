@@ -404,7 +404,7 @@ public class MainPage extends javax.swing.JFrame {
                 protected void done() {
                     try {
                         DtoProductUpdate dto = get();
-                        new ProductUpdatePage(id, dto).setVisible(true);
+                        new ProductUpdatePage(id, dto, () -> loadProductsAsync()).setVisible(true);
                         loadProductsAsync();
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(MainPage.this,
@@ -431,7 +431,7 @@ public class MainPage extends javax.swing.JFrame {
                     protected void done() {
                         try {
                             DtoProductUpdate dto = get();
-                            new ProductUpdatePage(id, dto).setVisible(true);
+                            new ProductUpdatePage(id, dto, () -> loadProductsAsync()).setVisible(true);
                             loadProductsAsync();
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(MainPage.this,
