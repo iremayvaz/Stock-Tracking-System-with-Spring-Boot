@@ -15,6 +15,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
 
     private static final String EMPLOYEES        = "/employees";
     private static final String UPDATE_EMPLOYEES = EMPLOYEES + "/update"; //   /employees/update
+    private final EmployeeUpdateListener listener;
 
     public String getTckNo() { return txt_tckno.getText(); }
 
@@ -42,14 +43,16 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
 
     public EmployeeUpdatePage() {
         this.id = null;
+        this.listener = null;
         initComponents();
         comboBox_position.setModel(new javax.swing.DefaultComboBoxModel<>(RoleName.values()));
         btn_update.setEnabled(false);
     }
 
 
-    public EmployeeUpdatePage(Long id, DtoUserUpdate dto) {
+    public EmployeeUpdatePage(Long id, DtoUserUpdate dto, EmployeeUpdateListener listener) {
         this.id = id;
+        this.listener = listener;
         initComponents();
         txt_tckno.setText(dto.getTck_no());
         txt_name.setText(dto.getFirstName());
@@ -245,6 +248,7 @@ public class EmployeeUpdatePage extends javax.swing.JFrame {
                     if (get()) {
                         JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Güncellendi");
                         dispose();
+                        listener.onEmployeeUpdated();
                     } else {
                         JOptionPane.showMessageDialog(EmployeeUpdatePage.this, "Güncellenemedi", "Hata", JOptionPane.ERROR_MESSAGE);
                     }
