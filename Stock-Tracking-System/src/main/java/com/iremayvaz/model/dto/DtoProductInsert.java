@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DtoProductIU {
+public class DtoProductInsert {
     // IU : Insert - Update
     // REQUEST işlemlerinde kullanılır.
     // @PostMapping veya @PutMapping işlemlerinde kullanılır

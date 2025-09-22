@@ -1,8 +1,8 @@
 package com.iremayvaz.services.impl;
 
 import com.iremayvaz.model.dto.DtoProduct;
-import com.iremayvaz.model.dto.DtoProductDetail;
-import com.iremayvaz.model.dto.DtoProductIU;
+import com.iremayvaz.model.dto.DtoProductUpdate;
+import com.iremayvaz.model.dto.DtoProductInsert;
 import com.iremayvaz.model.entity.Product;
 import com.iremayvaz.repository.ProductRepository;
 import com.iremayvaz.repository.specifications.ProductSpecifications;
@@ -24,7 +24,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional
     @Override
-    public DtoProduct addProduct(DtoProductIU addProductRequest) {
+    public DtoProduct addProduct(DtoProductInsert addProductRequest) {
         DtoProduct dto = new DtoProduct();
         Product product = new Product();
 
@@ -44,7 +44,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public DtoProduct updateProductInfos(Long id, DtoProductIU updateProductRequest) {
+    public DtoProduct updateProductInfos(Long id, DtoProductInsert updateProductRequest) {
         DtoProduct dto = new DtoProduct();
 
         Product product = productRepository.findById(id)
@@ -93,8 +93,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional(readOnly=true)
     @Override
-    public DtoProductDetail getProductInfo(Long id) { // update'i otomatik doldurmak için yazdım. değiştirilecek kısım silinip değiştirilebilir.
-        DtoProductDetail dto = new DtoProductDetail();
+    public DtoProductUpdate getProductInfo(Long id) { // update'i otomatik doldurmak için yazdım. değiştirilecek kısım silinip değiştirilebilir.
+        DtoProductUpdate dto = new DtoProductUpdate();
         Optional<Product> optional = productRepository.findById(id);
 
         if (optional.isPresent()){

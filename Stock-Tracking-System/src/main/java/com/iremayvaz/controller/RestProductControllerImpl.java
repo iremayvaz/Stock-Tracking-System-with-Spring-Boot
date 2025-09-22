@@ -1,8 +1,8 @@
 package com.iremayvaz.controller;
 
 import com.iremayvaz.model.dto.DtoProduct;
-import com.iremayvaz.model.dto.DtoProductDetail;
-import com.iremayvaz.model.dto.DtoProductIU;
+import com.iremayvaz.model.dto.DtoProductUpdate;
+import com.iremayvaz.model.dto.DtoProductInsert;
 import com.iremayvaz.services.impl.ProductServiceImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +24,7 @@ public class RestProductControllerImpl {
     
     @PreAuthorize( "hasAuthority('PRODUCT_ADD') and hasAnyRole('SECRETARY', 'EMPLOYEE', 'BOSS', 'CONSULTANT', 'AUTHORIZED', 'ACCOUNTANT')" )
     @PostMapping("/add")
-    public ResponseEntity<DtoProduct> addProduct(@RequestBody @Valid DtoProductIU addProductRequest) {
+    public ResponseEntity<DtoProduct> addProduct(@RequestBody @Valid DtoProductInsert addProductRequest) {
         var newProduct = productService.addProduct(addProductRequest);
         return ResponseEntity.created(URI.create("/products/" + newProduct.getBarcode())).body(newProduct);
     }
@@ -33,7 +33,7 @@ public class RestProductControllerImpl {
     @PreAuthorize( "hasAuthority('PRODUCT_UPDATE') and hasAnyRole('SECRETARY', 'EMPLOYEE', 'BOSS', 'CONSULTANT', 'AUTHORIZED')" )
     @PutMapping("/update/{id}")
     public DtoProduct updateProductInfos(@PathVariable @NotNull Long id,
-                                         @RequestBody @Valid DtoProductIU updateProductRequest) {
+                                         @RequestBody @Valid DtoProductInsert updateProductRequest) {
         return productService.updateProductInfos(id, updateProductRequest);
     }
 
@@ -54,7 +54,7 @@ public class RestProductControllerImpl {
 
     @PreAuthorize( "hasAuthority('PRODUCT_LIST') and hasAnyRole('EMPLOYEE', 'ACCOUNTANT', 'SECRETARY', 'BOSS', 'CONSULTANT', 'VISITOR', 'AUTHORIZED')" )
     @GetMapping("/{id}")
-    public DtoProductDetail getProductInfo(@PathVariable(value = "id") @NotNull Long id) {
+    public DtoProductUpdate getProductInfo(@PathVariable(value = "id") @NotNull Long id) {
         return productService.getProductInfo(id);
     }
 }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DtoUserIU {
+public class DtoUserInsert {
     // IU : Insert - Update
     // REQUEST işlemlerinde kullanılır.
     // @PostMapping veya @PutMapping işlemlerinde kullanılır

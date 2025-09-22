@@ -1,7 +1,7 @@
 package com.iremayvaz.services.impl;
 
 import com.iremayvaz.model.dto.DtoUser;
-import com.iremayvaz.model.dto.DtoUserIU;
+import com.iremayvaz.model.dto.DtoUserInsert;
 import com.iremayvaz.model.entity.Employee;
 import com.iremayvaz.model.entity.RefreshToken;
 import com.iremayvaz.model.entity.Role;
@@ -44,23 +44,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Transactional // Bir metot veya sınıfın tamamını bir işlem sayar. Hata durumunda rollback yapar. (son committen sonraki tüm değişiklikler)
     @Override
-    public DtoUser register(DtoUserIU dtoUserIU){
+    public DtoUser register(DtoUserInsert dtoUserInsert){
         DtoUser dto = new DtoUser();
         User user = new User();
 
-        var emailExists = userRepository.findByEmail(dtoUserIU.getEmail());
+        var emailExists = userRepository.findByEmail(dtoUserInsert.getEmail());
         if(emailExists.isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email zaten kayıtlı");
         } else {
 
-            user.setEmail(dtoUserIU.getEmail());
-            user.setPassword(passwordEncoder.encode(dtoUserIU.getPassword()));
+            user.setEmail(dtoUserInsert.getEmail());
+            user.setPassword(passwordEncoder.encode(dtoUserInsert.getPassword()));
 
-            Role userRole = roleRepository.findByName(dtoUserIU.getPosition())
-                    .orElseThrow(() -> new IllegalArgumentException("Role not found : " + dtoUserIU.getPosition()));
+            Role userRole = roleRepository.findByName(dtoUserInsert.getPosition())
+                    .orElseThrow(() -> new IllegalArgumentException("Role not found : " + dtoUserInsert.getPosition()));
             user.setRole(userRole);
 
-            Employee newEmployee = saveEmployeeInfos(dtoUserIU);
+            Employee newEmployee = saveEmployeeInfos(dtoUserInsert);
             user.attachEmployee(newEmployee);
 
             User savedUser = userRepository.save(user);
@@ -70,20 +70,20 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private Employee saveEmployeeInfos(DtoUserIU dtoUserIU){
+    private Employee saveEmployeeInfos(DtoUserInsert dtoUserInsert){
         Employee employee = new Employee();
 
-        var tcknoExists = employeeRepository.findByEmail(dtoUserIU.getEmail());
-        var phoneExists = employeeRepository.findByEmail(dtoUserIU.getEmail());
+        var tcknoExists = employeeRepository.findByEmail(dtoUserInsert.getEmail());
+        var phoneExists = employeeRepository.findByEmail(dtoUserInsert.getEmail());
 
         if(tcknoExists.isPresent() || phoneExists.isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email zaten kayıtlı");
         } else {
-            employee.setTck_no(dtoUserIU.getTck_no());
-            employee.setFirstName(dtoUserIU.getFirstName());
-            employee.setLastName(dtoUserIU.getLastName());
-            employee.setPhoneNum(dtoUserIU.getPhoneNum());
-            employee.setGender(dtoUserIU.getGender());
+            employee.setTck_no(dtoUserInsert.getTck_no());
+            employee.setFirstName(dtoUserInsert.getFirstName());
+            employee.setLastName(dtoUserInsert.getLastName());
+            employee.setPhoneNum(dtoUserInsert.getPhoneNum());
+            employee.setGender(dtoUserInsert.getGender());
 
             return employee;
         }

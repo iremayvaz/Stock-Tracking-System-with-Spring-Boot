@@ -1,7 +1,7 @@
 package com.iremayvaz.controller;
 
 import com.iremayvaz.model.dto.DtoUser;
-import com.iremayvaz.model.dto.DtoUserIU;
+import com.iremayvaz.model.dto.DtoUserInsert;
 import com.iremayvaz.model.jwt.AuthRequest;
 import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.RefreshTokenRequest;
@@ -25,8 +25,8 @@ public class RestAuthControllerImpl {
 
 
     @PostMapping("/register")
-    public ResponseEntity<DtoUser> register(@RequestBody @Valid DtoUserIU dtoUserIU) {
-        var newUser = authService.register(dtoUserIU);
+    public ResponseEntity<DtoUser> register(@RequestBody @Valid DtoUserInsert dtoUserInsert) {
+        var newUser = authService.register(dtoUserInsert);
         return ResponseEntity.created(URI.create("/users/" + newUser.getEmail())).body(newUser);
     }
 

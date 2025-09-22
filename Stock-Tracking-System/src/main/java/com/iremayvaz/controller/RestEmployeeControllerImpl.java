@@ -1,8 +1,8 @@
 package com.iremayvaz.controller;
 
 import com.iremayvaz.model.dto.DtoEmployee;
-import com.iremayvaz.model.dto.DtoEmployeeDetail;
-import com.iremayvaz.model.dto.DtoUserIU;
+import com.iremayvaz.model.dto.DtoUserUpdate;
+import com.iremayvaz.model.dto.DtoUserInsert;
 import com.iremayvaz.services.impl.EmployeeServiceImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -35,13 +35,13 @@ public class RestEmployeeControllerImpl{
     @PreAuthorize( "hasAuthority('EMPLOYEE_UPDATE') and hasAnyRole('SECRETARY', 'BOSS', 'AUTHORIZED')" )
     @PutMapping("/update/{id}")
     public DtoEmployee updateEmployeeInfos(@PathVariable(value = "id") @NotNull Long id,
-                                           @RequestBody @Valid DtoUserIU updateUserRequest) {
+                                           @RequestBody @Valid DtoUserUpdate updateUserRequest) {
         return employeeService.updateEmployeeInfos(id, updateUserRequest);
     }
 
     @PreAuthorize( "hasAuthority('EMPLOYEE_LIST') and hasAnyRole('SECRETARY', 'BOSS', 'AUTHORIZED', 'CONSULTANT')" )
     @GetMapping("/{id}")
-    public DtoEmployeeDetail getEmployeeInfo(@PathVariable(value = "id") @NotNull Long id) {
+    public DtoUserUpdate getEmployeeInfo(@PathVariable(value = "id") @NotNull Long id) {
         return employeeService.getEmployeeInfo(id);
     }
 }

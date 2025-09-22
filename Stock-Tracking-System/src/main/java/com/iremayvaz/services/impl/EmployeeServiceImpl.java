@@ -1,12 +1,13 @@
 package com.iremayvaz.services.impl;
 
 import com.iremayvaz.model.dto.DtoEmployee;
-import com.iremayvaz.model.dto.DtoEmployeeDetail;
-import com.iremayvaz.model.dto.DtoUserIU;
+import com.iremayvaz.model.dto.DtoUserUpdate;
+import com.iremayvaz.model.dto.DtoUserInsert;
 import com.iremayvaz.model.entity.Employee;
 import com.iremayvaz.model.entity.Role;
 import com.iremayvaz.model.entity.User;
 import com.iremayvaz.repository.EmployeeRepository;
+import com.iremayvaz.repository.RefreshTokenRepository;
 import com.iremayvaz.repository.RoleRepository;
 import com.iremayvaz.repository.UserRepository;
 import com.iremayvaz.repository.specifications.EmployeeSpecifications;
@@ -29,6 +30,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder; // BCrypt bean'i gelecek
 
@@ -60,14 +62,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Transactional
     @Override
-    public DtoEmployee updateEmployeeInfos(Long id, DtoUserIU updateUserRequest) {
+    public DtoEmployee updateEmployeeInfos(Long id, DtoUserUpdate updateUserRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kullanıcı bulunamadı"));
 
-        if(updateUserRequest.getEmail() == null || updateUserRequest.getEmail().isBlank()) { throw new IllegalArgumentException("Email boş"); }
-
         if (!user.getEmail().equals(updateUserRequest.getEmail())) {
-            if (userRepository.existsByEmail(user.getEmail())) {
+            if (userRepository.existsByEmailAndIdNot(user.getEmail(), id)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email zaten kayıtlı");
             }
             user.setEmail(updateUserRequest.getEmail());
@@ -91,6 +91,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             e.setUser(user);
             user.setEmployee(e);
         }
+
         e.setTck_no(updateUserRequest.getTck_no());
         e.setFirstName(updateUserRequest.getFirstName());
         e.setLastName(updateUserRequest.getLastName());
@@ -110,23 +111,42 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Transactional(readOnly=true)
     @Override
-    public DtoEmployeeDetail getEmployeeInfo(Long id) { // update'i otomatik doldurmak için yazdım. değiştirilecek kısım silinip değiştirilebilir.
-        DtoEmployeeDetail dto = new DtoEmployeeDetail();
+    public DtoUserUpdate getEmployeeInfo(Long id) { // update'i otomatik doldurmak için yazdım. değiştirilecek kısım silinip değiştirilebilir.
         Optional<Employee> optional = employeeRepository.findById(id);
 
         if (optional.isPresent()){
-            BeanUtils.copyProperties(optional.get(), dto);
+            Employee employee = optional.get();
+            DtoUserUpdate dto = new DtoUserUpdate();
+
+            // Employee verileri
+            dto.setTck_no(employee.getTck_no());        // tckno
+            dto.setFirstName(employee.getFirstName());  // ad
+            dto.setLastName(employee.getLastName());    // soyad
+            dto.setPhoneNum(employee.getPhoneNum());    // telno
+            dto.setGender(employee.getGender());        // cinsiyet
+
+            // User verileri (Employee'nin User'ını al)
+            if (employee.getUser() != null) {
+                dto.setEmail(employee.getUser().getEmail()); // mail
+
+                if (employee.getUser().getRole() != null) {
+                    dto.setPosition(employee.getUser().getRole().getName()); // pozisyon
+                }
+            }
+
             return dto;
         } else {
             throw new IllegalArgumentException("Id ile kayıtlı kullanıcı yok!");
         }
     }
 
+    @Transactional
     @Override
     public void deleteEmployee(Long id) {
         Optional<User> optional = userRepository.findById(id);
         if(optional.isPresent()){
-            userRepository.delete(optional.get());
+            refreshTokenRepository.deleteByUserId(optional.get().getId()); // önce kullanıcıya ait token'ları siliyoruz
+            userRepository.delete(optional.get()); // sonra kullanıcıyı
         } else {
             throw new IllegalArgumentException("Kullanıcı silinemedi. Böyle bir çalışan kaydı yok!");
         }

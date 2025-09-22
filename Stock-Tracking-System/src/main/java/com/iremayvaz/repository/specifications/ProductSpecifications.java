@@ -19,10 +19,14 @@ public class ProductSpecifications {
             }
 
             try{
-                return criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get(column)),
-                        "%" + content.toLowerCase() + "%"
-                );
+                if(column.equalsIgnoreCase("price") || column.equalsIgnoreCase("stockquantity")){ // NUMERİK
+                    return criteriaBuilder.equal(root.get(column), content);
+                } else { // STRING
+                    return criteriaBuilder.like(
+                            criteriaBuilder.lower(root.get(column)),
+                            "%" + content.toLowerCase() + "%"
+                    );
+                }
             } catch (IllegalArgumentException e) {
                 return criteriaBuilder.disjunction(); // FALSE döner yani boş kayıt döner
             }
