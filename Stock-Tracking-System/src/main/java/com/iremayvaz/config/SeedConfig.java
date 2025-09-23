@@ -35,16 +35,16 @@ public class SeedConfig {
                         Permission.EMPLOYEE_ADD,
                         Permission.PRODUCT_ADD,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST,
-                        Permission.ME
+                        Permission.PRODUCT_LIST
+                        
                 ),// PATRON
 
                 RoleName.ACCOUNTANT, Set.of(
                         Permission.PRODUCT_DELETE,
                         Permission.PRODUCT_UPDATE,
                         Permission.PRODUCT_ADD,
-                        Permission.PRODUCT_LIST,
-                        Permission.ME
+                        Permission.PRODUCT_LIST
+                        
                 ),// MUHASEBECİ
 
                 RoleName.AUTHORIZED, Set.of(
@@ -55,24 +55,23 @@ public class SeedConfig {
                         Permission.EMPLOYEE_ADD,
                         Permission.PRODUCT_ADD,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST,
-                        Permission.ME
+                        Permission.PRODUCT_LIST
+                        
                 ), // YETKİLİ KİŞİ
 
                 RoleName.CONSULTANT, Set.of(
                         Permission.EMPLOYEE_UPDATE,
                         Permission.EMPLOYEE_ADD,
                         Permission.EMPLOYEE_DELETE,
-                        Permission.EMPLOYEE_LIST,
-                        Permission.ME
+                        Permission.EMPLOYEE_LIST
+                        
                 ), // DANIŞMAN
 
                 RoleName.EMPLOYEE, Set.of(
                         Permission.PRODUCT_UPDATE,
                         Permission.PRODUCT_ADD,
-                        Permission.PRODUCT_LIST,
-                        Permission.ME
-                            //Permission.EMPLOYEE_LIST,
+                        Permission.PRODUCT_LIST
+
                         // kendi bilgilerini de güncellesin??
                 ), // ÇALIŞAN
 
@@ -84,13 +83,13 @@ public class SeedConfig {
                         Permission.EMPLOYEE_ADD,
                         Permission.PRODUCT_ADD,
                         Permission.EMPLOYEE_LIST,
-                        Permission.PRODUCT_LIST,
-                        Permission.ME
+                        Permission.PRODUCT_LIST
+                        
                 ), // SEKRETER
 
                 RoleName.VISITOR, Set.of(
-                        Permission.PRODUCT_LIST,
-                        Permission.ME
+                        Permission.PRODUCT_LIST
+                        
                 ) // ZİYARETÇİ
             );
 

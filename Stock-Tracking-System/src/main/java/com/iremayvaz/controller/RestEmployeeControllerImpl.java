@@ -2,7 +2,6 @@ package com.iremayvaz.controller;
 
 import com.iremayvaz.model.dto.DtoEmployee;
 import com.iremayvaz.model.dto.DtoUserUpdate;
-import com.iremayvaz.model.dto.DtoUserInsert;
 import com.iremayvaz.services.impl.EmployeeServiceImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
