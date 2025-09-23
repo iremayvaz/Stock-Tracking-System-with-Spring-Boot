@@ -36,3 +36,25 @@ build/
 
 ### Mac OS ###
 .DS_Store
+Thumbs.db
+HELP.md
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# Logs & temp
+logs/
+*.log
+*.tmp
+hs_err_pid*
+
+# Env / secrets
+.env
+*.local.yml
+*.local.properties
