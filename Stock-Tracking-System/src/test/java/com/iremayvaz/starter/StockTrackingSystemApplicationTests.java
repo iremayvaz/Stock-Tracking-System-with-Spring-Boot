@@ -1,4 +1,4 @@
-package com.iremayvaz.Stock_Tracking_System;
+package com.iremayvaz.starter;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
