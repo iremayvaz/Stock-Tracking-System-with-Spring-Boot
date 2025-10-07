@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 
 public class Client {
 
-    private static final String BASE_URL      = "http://localhost:8000"; // docker için
-    //private static final String BASE_URL      = "http://localhost:8000"; // lokal için
+    //private static final String BASE_URL      = "http://localhost:8000"; // docker için
+    private static final String BASE_URL      = "http://localhost:8080"; // lokal için
     private static final String AUTH_REFRESH  = "/refresh-token";
 
     private final OkHttpClient client;

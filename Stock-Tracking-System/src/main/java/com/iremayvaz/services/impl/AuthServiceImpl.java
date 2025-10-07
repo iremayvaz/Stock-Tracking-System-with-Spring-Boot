@@ -73,8 +73,8 @@ public class AuthServiceImpl implements AuthService {
     private Employee saveEmployeeInfos(DtoUserInsert dtoUserInsert){
         Employee employee = new Employee();
 
-        var tcknoExists = employeeRepository.findByEmail(dtoUserInsert.getEmail());
-        var phoneExists = employeeRepository.findByEmail(dtoUserInsert.getEmail());
+        var tcknoExists = employeeRepository.findByTckno(dtoUserInsert.getTck_no());
+        var phoneExists = employeeRepository.findByPhone(dtoUserInsert.getPhoneNum());
 
         if(tcknoExists.isPresent() || phoneExists.isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email zaten kayıtlı");

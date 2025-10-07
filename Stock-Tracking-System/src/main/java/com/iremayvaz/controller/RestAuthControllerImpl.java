@@ -7,6 +7,8 @@ import com.iremayvaz.model.jwt.AuthResponse;
 import com.iremayvaz.model.jwt.RefreshTokenRequest;
 import com.iremayvaz.services.impl.AuthServiceImpl;
 import com.iremayvaz.services.impl.RefreshTokenServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
+@Tag(name = "Auth API", description = "Auth işlemleri")
 @RestController
 @RequiredArgsConstructor
 public class RestAuthControllerImpl {
@@ -21,21 +24,21 @@ public class RestAuthControllerImpl {
     private final AuthServiceImpl authService;
     private final RefreshTokenServiceImpl refreshTokenService;
 
-
+    @Operation(description = "Kaydolma")
     @PostMapping("/register")
     public ResponseEntity<DtoUser> register(@RequestBody @Valid DtoUserInsert dtoUserInsert) {
         var newUser = authService.register(dtoUserInsert);
         return ResponseEntity.created(URI.create("/users/" + newUser.getEmail())).body(newUser);
     }
 
-
+    @Operation(description = "Giriş")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest existingEmployee) {
         var newLogin = authService.login(existingEmployee);
         return ResponseEntity.accepted().body(newLogin);
     }
 
-
+    @Operation(description = "RefreshToken oluşturma")
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
         var refresh = refreshTokenService.refreshToken(request);

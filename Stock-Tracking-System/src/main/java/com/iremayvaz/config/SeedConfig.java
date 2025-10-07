@@ -17,7 +17,7 @@ import java.util.Set;
 @Configuration
 @RequiredArgsConstructor
 public class SeedConfig {
-    // Uygulama çalıştırıldığında veritabanına temel rol - izin blgilerini yükler.
+    // Uygulama çalıştırıldığında veritabanına temel rol - izin bilgilerini yükler.
 
     private final RoleRepository roleRepository;
 

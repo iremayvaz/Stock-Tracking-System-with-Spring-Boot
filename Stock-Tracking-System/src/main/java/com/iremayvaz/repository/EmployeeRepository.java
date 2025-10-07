@@ -21,4 +21,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
 
     @Query("SELECT e FROM Employee e WHERE e.user.email = :email")
     Optional<Employee> findByEmail(@Param("email") String email);
+
+    @Query("SELECT e FROM Employee e WHERE e.tck_no = :tck_no")
+    Optional<Employee> findByTckno(@Param("tck_no") String tck_no);
+
+    @Query("SELECT e FROM Employee e WHERE e.phoneNum = :phoneNum")
+    Optional<Employee> findByPhone(@Param("phoneNum") String phoneNum);
 }
